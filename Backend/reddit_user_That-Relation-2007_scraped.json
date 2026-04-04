@@ -1,0 +1,100 @@
+{
+  "username": "That-Relation-2007",
+  "rhythm_features_7_day_basis": {
+    "total_posts": 14,
+    "posting_frequency_days": 0.024977,
+    "median_gap_seconds": 2158.0,
+    "gap_variance": 459241642063.22,
+    "top_of_hour_ratio": 0.0714,
+    "hour_variance": 85.19,
+    "avg_sleep_hours": 479.79
+  },
+  "timeline": [
+    {
+      "type": "post",
+      "text": "US citizenship is on sale for 5M",
+      "timestamp": 1740526261.0
+    },
+    {
+      "type": "post",
+      "text": "The World we live in today",
+      "timestamp": 1738239110.0
+    },
+    {
+      "type": "post",
+      "text": "To all the Indians who supported Trump!",
+      "timestamp": 1737946985.0
+    },
+    {
+      "type": "post",
+      "text": "If you FAFO and are struggling because of Trump policies, we understand!",
+      "timestamp": 1737945724.0
+    },
+    {
+      "type": "post",
+      "text": "Get your coffee folks!",
+      "timestamp": 1737944626.0
+    },
+    {
+      "type": "comment",
+      "text": "This is at Costco New Jersey!",
+      "timestamp": 1737839128.0
+    },
+    {
+      "type": "post",
+      "text": "Egg Price SPIKE!! Track it here!",
+      "timestamp": 1737837046.0
+    },
+    {
+      "type": "post",
+      "text": "The World we live today!",
+      "timestamp": 1737741862.0
+    },
+    {
+      "type": "post",
+      "text": "This is so heartbreaking to watch!! Please vote!! ",
+      "timestamp": 1730636660.0
+    },
+    {
+      "type": "post",
+      "text": "Why Republicans Keep the Border Issue Unresolved: Vote Blue for Real Solutions",
+      "timestamp": 1730635573.0
+    },
+    {
+      "type": "post",
+      "text": "I don't know why I like this so much but I do!",
+      "timestamp": 1726792841.0
+    },
+    {
+      "type": "post",
+      "text": "Elon Musk is both",
+      "timestamp": 1726704955.0
+    },
+    {
+      "type": "comment",
+      "text": "Lol \ud83d\ude06",
+      "timestamp": 1726704554.0
+    },
+    {
+      "type": "comment",
+      "text": "Lol \ud83d\ude06",
+      "timestamp": 1726702396.0
+    }
+  ],
+  "full_timestamp_timeline": [
+    1726702396.0,
+    1726704554.0,
+    1726704955.0,
+    1726792841.0,
+    1730635573.0,
+    1730636660.0,
+    1737741862.0,
+    1737837046.0,
+    1737839128.0,
+    1737944626.0,
+    1737945724.0,
+    1737946985.0,
+    1738239110.0,
+    1740526261.0
+  ]
+}
