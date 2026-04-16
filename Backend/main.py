@@ -44,7 +44,7 @@ class UserRequest(BaseModel):
     username: str
 
 def get_file_path(username: str):
-    return f"reddit_user_{username}_scraped.json"
+    return os.path.join("UserData", f"reddit_user_{username}_scraped.json")
 
 def sse(payload: dict) -> str:
     """Format a dict as an SSE data line."""
