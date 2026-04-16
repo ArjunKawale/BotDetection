@@ -33,7 +33,7 @@ def scrape_and_save_user_data(username: str) -> str:
         api.upload_file(
             path_or_fileobj=filepath,
             path_in_repo=filename, # The name it will have in the dataset
-            repo_id="YOUR_HF_USERNAME/reddit-bot-data", # <-- CHANGE THIS
+            repo_id="Cel-Est-ial-34929/reddit-Bot-Scraped", # <-- CHANGE THIS
             repo_type="dataset",
             token=os.getenv("HF_TOKEN")
         )

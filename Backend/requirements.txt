@@ -4,5 +4,8 @@ uvicorn
 pydantic
 google-genai
 python-dotenv
-beautifulsoup4
 requests
+numpy
+pandas
+huggingface_hub
+scikit-learn
