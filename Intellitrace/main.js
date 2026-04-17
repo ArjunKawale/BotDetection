@@ -3,18 +3,23 @@ const path = require("path");
 const { spawn } = require("child_process");
 const fs = require("fs");
 
-// ── helpers ──────────────────────────────────────────────────────────────────
+// ── HELPERS ──────────────────────────────────────────────────────────────────
 
+/**
+ * Automatically detects if the app is running in dev or production
+ * and points to the correct folder for Scrapingtool.exe
+ */
 function getResourcePath(...segments) {
-  // In production (packaged), resources live next to the exe.
-  // In dev, they live next to main.js.
-  const base = app.isPackaged
-    ? path.dirname(process.execPath)
-    : __dirname;
-  return path.join(base, ...segments);
+  if (app.isPackaged) {
+    // In production, extraResources are tucked into the 'resources' folder
+    return path.join(process.resourcesPath, ...segments);
+  } else {
+    // In development, they are in the project root next to main.js
+    return path.join(__dirname, ...segments);
+  }
 }
 
-// ── window ───────────────────────────────────────────────────────────────────
+// ── WINDOW MANAGEMENT ────────────────────────────────────────────────────────
 
 let win;
 
@@ -34,7 +39,7 @@ function createWindow() {
   });
 
   win.loadFile("index.html");
-  // win.webContents.openDevTools();   // uncomment during development
+  // win.webContents.openDevTools(); // Uncomment for debugging during demo
 }
 
 app.whenReady().then(createWindow);
@@ -43,7 +48,7 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
 
-// ── IPC: window controls ─────────────────────────────────────────────────────
+// ── IPC: WINDOW CONTROLS ─────────────────────────────────────────────────────
 
 ipcMain.on("window-minimize", () => win?.minimize());
 ipcMain.on("window-maximize", () =>
@@ -51,16 +56,16 @@ ipcMain.on("window-maximize", () =>
 );
 ipcMain.on("window-close", () => win?.close());
 
-// ── Global Storage Path ──────────────────────────────────────────────────────
-// This points to the safe, writable AppData folder on Windows
+// ── GLOBAL STORAGE PATH ──────────────────────────────────────────────────────
+// This points to %APPDATA%/reddit-bot-detector/ which is always writable
 const userStorageDir = app.getPath("userData");
 
-// ── IPC: run scraper exe ─────────────────────────────────────────────────────
-// Sends back events:  { event: "stdout"|"stderr"|"done"|"error", data }
+// ── IPC: RUN SCRAPER EXE ─────────────────────────────────────────────────────
 
 ipcMain.on("run-scraper", (event, { username }) => {
   const exePath = getResourcePath("Scrapingtool.exe");
 
+  // Safety check to ensure the scraper exists
   if (!fs.existsSync(exePath)) {
     event.sender.send("scraper-event", {
       event: "error",
@@ -69,24 +74,18 @@ ipcMain.on("run-scraper", (event, { username }) => {
     return;
   }
 
-  // Set the CWD to userStorageDir so it has permission to save the JSON file
+  // Spawn the process
   const proc = spawn(exePath, [username], {
-    cwd: userStorageDir,
-    env: { ...process.env, PYTHONIOENCODING: "utf-8" } // <-- Added this to prevent the Windows emoji crash!
+    cwd: userStorageDir, // Run inside AppData so it can save JSON without permission errors
+    env: { ...process.env, PYTHONIOENCODING: "utf-8" } // Force UTF-8 to handle emojis
   });
 
   proc.stdout.on("data", (buf) => {
-    event.sender.send("scraper-event", {
-      event: "stdout",
-      data: buf.toString(),
-    });
+    event.sender.send("scraper-event", { event: "stdout", data: buf.toString() });
   });
 
   proc.stderr.on("data", (buf) => {
-    event.sender.send("scraper-event", {
-      event: "stderr",
-      data: buf.toString(),
-    });
+    event.sender.send("scraper-event", { event: "stderr", data: buf.toString() });
   });
 
   proc.on("close", (code) => {
@@ -101,26 +100,25 @@ ipcMain.on("run-scraper", (event, { username }) => {
   });
 
   proc.on("error", (err) => {
-    event.sender.send("scraper-event", {
-      event: "error",
-      data: err.message,
-    });
+    event.sender.send("scraper-event", { event: "error", data: err.message });
   });
 });
 
-// ── IPC: read scraped JSON ────────────────────────────────────────────────────
+// ── IPC: READ SCRAPED JSON ───────────────────────────────────────────────────
 
 ipcMain.handle("read-json", (_event, { username }) => {
-  // Read from the same userStorageDir where the scraper just saved it
+  // Look for the JSON exactly where the scraper saved it
   const filePath = path.join(userStorageDir, "UserData", `formatted_${username}.json`);
+  
   if (!fs.existsSync(filePath)) {
     throw new Error(`JSON file not found: ${filePath}`);
   }
+  
   const raw = fs.readFileSync(filePath, "utf8");
   return JSON.parse(raw);
 });
 
-// ── IPC: save settings ────────────────────────────────────────────────────────
+// ── IPC: SETTINGS MANAGEMENT ─────────────────────────────────────────────────
 
 const SETTINGS_PATH = path.join(userStorageDir, "settings.json");
 
@@ -128,8 +126,11 @@ ipcMain.handle("load-settings", () => {
   try {
     return JSON.parse(fs.readFileSync(SETTINGS_PATH, "utf8"));
   } catch {
-    // Fallback defaults if they haven't saved settings yet
-    return { apiUrl: "http://127.0.0.1:8000", apiKey: "" };
+    // Default values for the demo
+    return { 
+      apiUrl: "https://cel-est-ial-34929-botdetectionbackend.hf.space", 
+      apiKey: "" 
+    };
   }
 });
 
