@@ -3,19 +3,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
+from typing import List, Dict, Any
 import os, json
 from dotenv import load_dotenv
 
+# Import ONLY your ML models (removed webscraper and ConvText imports)
 from TextPattern import run_ideology_model
 from AiGen import run_text_authenticity_model
 from FreqBotfn import run_frequency_model
 from TimePatternBotfn import run_rhythm_model
-from ConvText import (
-    extract_messages_from_file,
-    extract_posting_frequency,
-    extract_rhythm_features,
-)
-from webScraperfn import scrape_and_save_user_data
 
 # Load environment variables
 load_dotenv()
@@ -39,16 +35,34 @@ def verify_api_key(api_key: str = Security(api_key_header)):
         raise HTTPException(status_code=403, detail="Invalid API Key")
     return api_key
 
-
-class UserRequest(BaseModel):
-    username: str
-
-def get_file_path(username: str):
-    return os.path.join("UserData", f"reddit_user_{username}_scraped.json")
-
 def sse(payload: dict) -> str:
     """Format a dict as an SSE data line."""
     return f"data: {json.dumps(payload)}\n\n"
+
+
+# -------- PYDANTIC SCHEMAS FOR INCOMING JSON --------
+class MessageItem(BaseModel):
+    type: str
+    text: str
+
+class MessagesWrapper(BaseModel):
+    username: str
+    messages: List[MessageItem]
+
+class RhythmFeatures(BaseModel):
+    total_posts: int
+    median_gap_seconds: float
+    gap_variance: float
+    top_of_hour_ratio: float
+    hour_variance: float
+    avg_sleep_hours: float
+
+class FullDataRequest(BaseModel):
+    username: str
+    messages: MessagesWrapper
+    frequency_data: float
+    rhythm_features: RhythmFeatures
+
 
 # -------- ROOT ENDPOINT (Server Check) --------
 @app.get("/")
@@ -63,22 +77,19 @@ def read_root():
 
 # -------- MAIN PIPELINE (streaming) --------
 @app.post("/api/v1/process-user")
-def process_user(request: UserRequest, api_key: str = Depends(verify_api_key)):
+def process_user(request: FullDataRequest, api_key: str = Depends(verify_api_key)):
     username = request.username
+    
+    # Convert the Pydantic models back into standard Python dictionaries 
+    # so your existing ML functions can read them without breaking.
+    user_messages = request.messages.model_dump()
+    freq_val = request.frequency_data
+    rhythm_dict = request.rhythm_features.model_dump()
 
     def event_stream():
         try:
-            # STEP 1 — Scrape
-            yield sse({"step": "scraping",   "message": "Gathering Reddit data…"})
-            file_path = scrape_and_save_user_data(username)
-            if not os.path.exists(file_path):
-                raise Exception("JSON file was not created")
-
-            # STEP 2 — Parse
-            yield sse({"step": "parsing",    "message": "Parsing post history…"})
-            user_messages = extract_messages_from_file(file_path)
-            freq_val      = extract_posting_frequency(file_path)
-            rhythm_dict   = extract_rhythm_features(file_path)
+            # Note: Steps 1 & 2 (Scraping/Parsing) are skipped because 
+            # the data is now provided directly in the request payload.
 
             # STEP 3a — Ideology model
             yield sse({"step": "ideology",   "message": "Analyzing content & ideology…"})
@@ -112,7 +123,6 @@ def process_user(request: UserRequest, api_key: str = Depends(verify_api_key)):
                 "result": {
                     "status": "Success",
                     "username": username,
-                    "file_created": file_path,
                     "overall_probability": overall_prob,
                     "is_bot_overall": overall_prob >= 0.5,
                     "full_analysis": {
@@ -128,29 +138,3 @@ def process_user(request: UserRequest, api_key: str = Depends(verify_api_key)):
             yield sse({"step": "error", "message": str(e)})
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
-
-
-# -------- GET ENDPOINTS --------
-@app.get("/api/v1/analysis/ideology/{username}")
-def get_ideology_only(username: str):
-    path = get_file_path(username)
-    if not os.path.exists(path): raise HTTPException(404, "Run POST first")
-    return {"username": username, "result": run_ideology_model(extract_messages_from_file(path))}
-
-@app.get("/api/v1/analysis/aigen/{username}")
-def get_aigen_only(username: str):
-    path = get_file_path(username)
-    if not os.path.exists(path): raise HTTPException(404, "Run POST first")
-    return {"username": username, "result": run_text_authenticity_model(extract_messages_from_file(path))}
-
-@app.get("/api/v1/analysis/frequency/{username}")
-def get_frequency_only(username: str):
-    path = get_file_path(username)
-    if not os.path.exists(path): raise HTTPException(404, "Run POST first")
-    return {"username": username, "result": run_frequency_model(extract_posting_frequency(path))}
-
-@app.get("/api/v1/analysis/rhythm/{username}")
-def get_rhythm_only(username: str):
-    path = get_file_path(username)
-    if not os.path.exists(path): raise HTTPException(404, "Run POST first")
-    return {"username": username, "result": run_rhythm_model(extract_rhythm_features(path))}

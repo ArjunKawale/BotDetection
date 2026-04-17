@@ -1,7 +1,0 @@
-xgboost
-fastapi
-uvicorn
-pydantic
-google-genai
-python-dotenv
-requests

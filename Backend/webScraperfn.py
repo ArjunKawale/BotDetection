@@ -1,6 +1,5 @@
 import json
 import os
-from huggingface_hub import HfApi # <-- Add this import
 from webscraper import scrape_hybrid_data, calculate_rhythmic_features
 
 def scrape_and_save_user_data(username: str) -> str:
@@ -26,19 +25,5 @@ def scrape_and_save_user_data(username: str) -> str:
 
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(final_output, f, indent=2)
-
-    # STEP 5: Upload to Hugging Face Dataset
-    try:
-        api = HfApi()
-        api.upload_file(
-            path_or_fileobj=filepath,
-            path_in_repo=filename, # The name it will have in the dataset
-            repo_id="Cel-Est-ial-34929/reddit-Bot-Scraped", # <-- CHANGE THIS
-            repo_type="dataset",
-            token=os.getenv("HF_TOKEN")
-        )
-        print(f"Successfully backed up {username} to HF Dataset.")
-    except Exception as e:
-        print(f"Warning: Failed to upload to HF Dataset: {e}")
 
     return filepath
