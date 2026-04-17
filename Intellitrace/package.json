@@ -1,0 +1,41 @@
+{
+  "name": "reddit-bot-detector",
+  "version": "1.0.0",
+  "description": "Electron frontend for the Reddit Bot Detector pipeline",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win --x64",
+    "build:dir": "electron-builder --win --x64 --dir"
+  },
+  "build": {
+    "appId": "com.yourname.reddit-bot-detector",
+    "productName": "Reddit Bot Detector",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "extraResources": [
+      {
+        "from": "Scrapingtool.exe",
+        "to": "Scrapingtool.exe"
+      },
+      {
+        "from": "User data",
+        "to": "User data",
+        "filter": ["**/*"]
+      }
+    ],
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.0.0"
+  }
+}

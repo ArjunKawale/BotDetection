@@ -18,7 +18,7 @@ def scrape_hybrid_data(username):
     after_id = None
     collected_100 = False
 
-    print(f"⏳ Processing user /u/{username}...")
+    print(f" Processing user /u/{username}...")
 
     while True:
         url = f"https://old.reddit.com/user/{username}/.json?limit=100"
