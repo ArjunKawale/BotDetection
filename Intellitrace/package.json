@@ -1,33 +1,40 @@
 {
-  "name": "reddit-bot-detector",
+  "name": "intellitrace",
   "version": "1.0.0",
-  "description": "Electron frontend for the Reddit Bot Detector pipeline",
+  "description": "Reddit Bot Detector",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --win --x64",
-    "build:dir": "electron-builder --win --x64 --dir"
-  },
-  "build": {
-    "appId": "com.yourname.reddit-bot-detector",
-    "productName": "Reddit Bot Detector",
-    "directories": {
-      "output": "dist"
-    },
-    "win": {
-      "target": "nsis",
-      "icon": "assets/icon.ico"
-    },
-    "extraResources": [
-      "Scrapingtool.exe"
-    ],
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true
-    }
+    "build": "electron-builder --linux AppImage"
   },
   "devDependencies": {
     "electron": "^30.0.0",
     "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.intellitrace.botdetector",
+    "productName": "Intellitrace",
+    "files": [
+      "**/*",
+      "!Scrapingtool/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "Scrapingtool",
+        "to": "Scrapingtool",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Utility"
+    }
+  },
+  "allowScripts": {
+    "electron@30.5.1": true
   }
 }
