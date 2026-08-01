@@ -1,1304 +1,1080 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Intellitrace | Multi-Model Analysis</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intellitrace — Reddit Bot Detector</title>
 
-<!-- Fonts -->
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
 
-<style>
-/* ========== DESIGN SYSTEM ========== */
-:root {
-  /* Dark theme (default) */
-  --bg-primary: #0a0c12;
-  --bg-secondary: #11131c;
-  --bg-tertiary: #181c2a;
-  --border: #232738;
-  --border-light: #2d3247;
-  --text-primary: #eef2ff;
-  --text-secondary: #9ca3c7;
-  --text-muted: #5f6a8a;
-  --accent: #6366f1;
-  --accent-hover: #8183f4;
-  --accent-glow: rgba(99,102,241,0.2);
-  --success: #10b981;
-  --error: #ef4444;
-  --warning: #f59e0b;
-  --info: #3b82f6;
-  --surface: #0f1119;
-  --card: #131724;
-  --radius: 12px;
-  --radius-sm: 8px;
-  --transition: all 0.2s ease;
-}
+  <style>
+    /* ═══════════════════════════════════════════════════════
+       THEME TOKENS
+       ═══════════════════════════════════════════════════════ */
+    :root,
+    [data-theme="dark"] {
+      --bg: #0c0e14;
+      --bg-subtle: #10131a;
+      --surface: #161a24;
+      --surface-hover: #1c2030;
+      --surface-glass: rgba(22, 26, 36, 0.82);
+      --border: rgba(255, 255, 255, 0.06);
+      --border-strong: rgba(255, 255, 255, 0.1);
+      --text: #e8ecf4;
+      --text-secondary: #8892a6;
+      --text-muted: #505a6e;
+      --accent: #a78bfa;
+      --accent-hover: #c4b5fd;
+      --accent-glow: rgba(167, 139, 250, 0.15);
+      --green: #34d399;
+      --green-soft: rgba(52, 211, 153, 0.1);
+      --red: #f87171;
+      --red-soft: rgba(248, 113, 113, 0.1);
+      --amber: #fbbf24;
+      --blue: #60a5fa;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 20px rgba(0,0,0,0.3);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,0.4);
+      --shadow-glow: 0 0 30px var(--accent-glow);
+    }
 
-[data-theme="light"] {
-  --bg-primary: #f3f4f8;
-  --bg-secondary: #ffffff;
-  --bg-tertiary: #eef2f6;
-  --border: #e0e4ec;
-  --border-light: #d1d6e2;
-  --text-primary: #1a1f36;
-  --text-secondary: #4a536e;
-  --text-muted: #8b94b0;
-  --accent: #4f46e5;
-  --accent-hover: #6366f1;
-  --accent-glow: rgba(79,70,229,0.1);
-  --surface: #ffffff;
-  --card: #ffffff;
-}
+    [data-theme="light"] {
+      --bg: #f5f7fa;
+      --bg-subtle: #edf0f5;
+      --surface: #ffffff;
+      --surface-hover: #f0f2f6;
+      --surface-glass: rgba(255, 255, 255, 0.82);
+      --border: rgba(0, 0, 0, 0.07);
+      --border-strong: rgba(0, 0, 0, 0.12);
+      --text: #1a1d26;
+      --text-secondary: #6b7280;
+      --text-muted: #9ca3af;
+      --accent: #7c3aed;
+      --accent-hover: #6d28d9;
+      --accent-glow: rgba(124, 58, 237, 0.1);
+      --green: #10b981;
+      --green-soft: rgba(16, 185, 129, 0.08);
+      --red: #ef4444;
+      --red-soft: rgba(239, 68, 68, 0.08);
+      --amber: #f59e0b;
+      --blue: #3b82f6;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
+      --shadow-glow: 0 0 30px var(--accent-glow);
+    }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+    /* ═══════════════════════════════════════════════════════
+       RESET & BASE
+       ═══════════════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-body {
-  font-family: 'Inter', sans-serif;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  height: 100vh;
-  overflow: hidden;
-  transition: background 0.25s ease, color 0.2s ease;
-}
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      transition: background-color 0.35s ease, color 0.35s ease;
+    }
 
-/* ========== TITLEBAR ========== */
-#titlebar {
-  -webkit-app-region: drag;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
-  height: 48px;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
+    /* ═══════════════════════════════════════════════════════
+       SCROLLBAR
+       ═══════════════════════════════════════════════════════ */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.brand-icon {
-  width: 28px;
-  height: 28px;
-  background: var(--accent);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  overflow: hidden;
-}
-.brand-text {
-  font-weight: 700;
-  font-size: 14px;
-  letter-spacing: -0.2px;
-}
-.brand-text span {
-  color: var(--accent);
-}
+    /* ═══════════════════════════════════════════════════════
+       TOPBAR
+       ═══════════════════════════════════════════════════════ */
+    #topbar {
+      -webkit-app-region: drag;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      background: var(--surface-glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      z-index: 1000;
+      transition: background-color 0.35s, border-color 0.35s;
+    }
 
-.window-controls {
-  -webkit-app-region: no-drag;
-  display: flex;
-  gap: 8px;
-}
-.win-btn {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  border: none;
-  background: var(--bg-tertiary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: var(--transition);
-}
-.win-btn svg {
-  width: 12px;
-  height: 12px;
-  stroke: var(--text-secondary);
-}
-.win-btn:hover {
-  background: var(--border);
-}
-.win-btn.close:hover {
-  background: var(--error);
-}
-.win-btn.close:hover svg {
-  stroke: white;
-}
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
 
-/* ========== MAIN LAYOUT ========== */
-#app {
-  display: flex;
-  height: calc(100vh - 48px);
-  overflow: hidden;
-}
+    .brand-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: brandPulse 2.5s ease-in-out infinite;
+    }
 
-/* ========== SIDEBAR ========== */
-#sidebar {
-  width: 280px;
-  background: var(--bg-secondary);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  flex-shrink: 0;
-}
+    .topbar-actions {
+      -webkit-app-region: no-drag;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
 
-.sidebar-content {
-  padding: 24px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-  flex: 1;
-}
+    .topbar-divider {
+      width: 1px;
+      height: 20px;
+      background: var(--border);
+      margin: 0 8px;
+    }
 
-.section-label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-bottom: 12px;
-}
+    /* Icon buttons */
+    .icon-btn {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, color 0.15s, transform 0.1s;
+    }
+    .icon-btn:hover { background: var(--surface-hover); color: var(--text); }
+    .icon-btn:active { transform: scale(0.93); }
 
-.input-group {
-  position: relative;
-  margin-bottom: 12px;
-}
-.input-prefix {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--accent);
-}
-#username-input {
-  width: 100%;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 12px 12px 12px 34px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  color: var(--text-primary);
-  outline: none;
-  transition: var(--transition);
-}
-#username-input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-glow);
-}
+    .icon-btn-sm {
+      width: 26px; height: 26px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, color 0.15s;
+    }
+    .icon-btn-sm:hover { background: var(--surface-hover); color: var(--text); }
 
-#scan-btn {
-  width: 100%;
-  padding: 12px;
-  background: var(--accent);
-  border: none;
-  border-radius: var(--radius-sm);
-  font-weight: 600;
-  font-size: 13px;
-  color: white;
-  cursor: pointer;
-  transition: var(--transition);
-}
-#scan-btn:hover:not(:disabled) {
-  background: var(--accent-hover);
-  transform: translateY(-1px);
-}
-#scan-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+    /* Window controls */
+    .window-controls { display: flex; gap: 4px; }
+    .window-controls button {
+      width: 28px; height: 28px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+    .window-controls button svg {
+      width: 10px; height: 10px;
+      stroke: var(--text-muted);
+      stroke-width: 1.5;
+      fill: none;
+    }
+    .window-controls button:hover { background: var(--surface-hover); }
+    .window-controls button:hover svg { stroke: var(--text); }
+    .window-controls .btn-close:hover { background: #ef4444; }
+    .window-controls .btn-close:hover svg { stroke: #fff; }
 
-/* Pipeline stages */
-.pipeline-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.pipeline-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border);
-  transition: var(--transition);
-}
-.pipeline-item.active {
-  border-color: var(--accent);
-  background: var(--accent-glow);
-}
-.pipeline-item.done {
-  border-color: var(--success);
-  background: rgba(16,185,129,0.08);
-}
-.pipeline-item.error {
-  border-color: var(--error);
-  background: rgba(239,68,68,0.08);
-}
-.pipeline-num {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-secondary);
-}
-.pipeline-item.active .pipeline-num {
-  background: var(--accent);
-  color: white;
-}
-.pipeline-item.done .pipeline-num {
-  background: var(--success);
-  color: white;
-}
-.pipeline-item.error .pipeline-num {
-  background: var(--error);
-  color: white;
-}
-.pipeline-name {
-  flex: 1;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-.pipeline-item.active .pipeline-name {
-  color: var(--accent);
-}
-.pipeline-item.done .pipeline-name {
-  color: var(--success);
-}
-.pipeline-spinner {
-  width: 14px;
-  height: 14px;
-  border: 2px solid var(--border);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-  display: none;
-}
-.pipeline-item.active .pipeline-spinner {
-  display: block;
-}
+    /* Theme toggle icons */
+    [data-theme="dark"] .theme-icon-moon { display: none; }
+    [data-theme="light"] .theme-icon-sun  { display: none; }
 
-.sidebar-footer {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.footer-btn {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: none;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: var(--transition);
-}
-.footer-btn:hover {
-  border-color: var(--border-light);
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-}
-.footer-btn svg {
-  width: 14px;
-  height: 14px;
-  stroke: currentColor;
-}
+    /* ═══════════════════════════════════════════════════════
+       APP & VIEWS
+       ═══════════════════════════════════════════════════════ */
+    #app {
+      position: relative;
+      height: 100vh;
+      padding-top: 48px;
+    }
 
-/* ========== MAIN CONTENT ========== */
-#main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  position: relative;
-}
+    .view {
+      position: absolute;
+      top: 48px; left: 0; right: 0; bottom: 0;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+      transition: opacity 0.45s ease, transform 0.45s ease;
+    }
+    .view.active {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: all;
+    }
 
-/* Empty state */
-#empty-state {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-}
-.empty-icon {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32px;
-}
-.empty-title {
-  font-size: 20px;
-  font-weight: 700;
-}
-.empty-desc {
-  font-size: 13px;
-  color: var(--text-secondary);
-  max-width: 320px;
-  text-align: center;
-}
+    /* ═══════════════════════════════════════════════════════
+       READY VIEW
+       ═══════════════════════════════════════════════════════ */
+    #view-ready {
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
 
-/* Log panel */
-#log-panel {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px 28px;
-  display: none;
-  flex-direction: column;
-  gap: 4px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-}
-#log-panel.visible {
-  display: flex;
-}
-.log-entry {
-  display: flex;
-  gap: 14px;
-  padding: 4px 0;
-  border-bottom: 1px solid var(--border);
-}
-.log-time {
-  color: var(--text-muted);
-  flex-shrink: 0;
-}
-.log-level {
-  flex-shrink: 0;
-  padding: 0 6px;
-  border-radius: 4px;
-  font-size: 9px;
-  font-weight: 700;
-}
-.level-info { background: rgba(59,130,246,0.15); color: var(--info); }
-.level-ok { background: rgba(16,185,129,0.15); color: var(--success); }
-.level-warn { background: rgba(245,158,11,0.15); color: var(--warning); }
-.level-err { background: rgba(239,68,68,0.15); color: var(--error); }
-.log-message { color: var(--text-secondary); }
+    /* Subtle dot-grid background */
+    #view-ready::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, var(--border-strong) 1px, transparent 1px);
+      background-size: 40px 40px;
+      opacity: 0.35;
+      pointer-events: none;
+    }
 
-/* Result panel */
-#result-panel {
-  flex: 1;
-  overflow-y: auto;
-  padding: 24px 28px;
-  display: none;
-  flex-direction: column;
-  gap: 24px;
-}
-#result-panel.visible {
-  display: flex;
-}
+    .hero-glow {
+      position: absolute;
+      width: 550px; height: 550px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--accent-glow), transparent 70%);
+      pointer-events: none;
+      animation: breathe 8s ease-in-out infinite;
+      z-index: 0;
+    }
 
-/* Tabs */
-.tab-bar {
-  display: flex;
-  gap: 4px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 4px;
-}
-.tab {
-  flex: 1;
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
-  background: none;
-  font-weight: 600;
-  font-size: 12px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: var(--transition);
-}
-.tab.active {
-  background: var(--accent);
-  color: white;
-}
-.tab-pane {
-  display: none;
-  flex-direction: column;
-  gap: 20px;
-}
-.tab-pane.active {
-  display: flex;
-}
+    .hero {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 22px;
+      text-align: center;
+      padding: 0 32px;
+      max-width: 640px;
+    }
 
-/* Verdict card */
-.verdict-card {
-  border-radius: var(--radius);
-  padding: 24px;
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-.verdict-card.high-risk {
-  background: rgba(239,68,68,0.08);
-  border: 1px solid rgba(239,68,68,0.3);
-}
-.verdict-card.low-risk {
-  background: rgba(16,185,129,0.08);
-  border: 1px solid rgba(16,185,129,0.3);
-}
-.verdict-card.medium-risk {
-  background: rgba(245,158,11,0.08);
-  border: 1px solid rgba(245,158,11,0.3);
-}
-.verdict-icon {
-  font-size: 48px;
-}
-.verdict-info {
-  flex: 1;
-}
-.verdict-badge {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-.verdict-title {
-  font-size: 24px;
-  font-weight: 800;
-  margin: 4px 0 6px;
-}
-.verdict-desc {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-.verdict-score {
-  text-align: center;
-  min-width: 100px;
-}
-.score-circle {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg-tertiary);
-  border: 2px solid var(--accent);
-}
-.score-value {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 22px;
-  font-weight: 700;
-}
+    .hero > * {
+      animation: fadeUp 0.65s ease both;
+    }
+    .hero > *:nth-child(1) { animation-delay: 0.05s; }
+    .hero > *:nth-child(2) { animation-delay: 0.15s; }
+    .hero > *:nth-child(3) { animation-delay: 0.25s; }
+    .hero > *:nth-child(4) { animation-delay: 0.35s; }
 
-/* Confidence section */
-.conf-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.conf-header {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-}
-.conf-track {
-  height: 6px;
-  background: var(--bg-tertiary);
-  border-radius: 99px;
-  overflow: hidden;
-}
-.conf-fill {
-  height: 100%;
-  border-radius: 99px;
-  transition: width 0.8s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-  width: 0;
-}
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 16px;
+      border-radius: 99px;
+      background: var(--accent-glow);
+      color: var(--accent);
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
 
-/* Metric cards */
-.metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-}
-.metric-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px;
-  transition: var(--transition);
-}
-.metric-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-.metric-name {
-  font-weight: 700;
-  font-size: 14px;
-}
-.metric-badge {
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 10px;
-  font-weight: 700;
-}
-.badge-high {
-  background: rgba(239,68,68,0.12);
-  color: var(--error);
-}
-.badge-medium {
-  background: rgba(245,158,11,0.12);
-  color: var(--warning);
-}
-.badge-low {
-  background: rgba(16,185,129,0.12);
-  color: var(--success);
-}
-.metric-score {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 32px;
-  font-weight: 700;
-  margin-bottom: 12px;
-}
-.metric-bar {
-  height: 4px;
-  background: var(--bg-tertiary);
-  border-radius: 99px;
-  margin: 12px 0;
-  overflow: hidden;
-}
-.metric-bar-fill {
-  height: 100%;
-  border-radius: 99px;
-  transition: width 0.6s ease;
-  width: 0;
-}
-.metric-interpretation {
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--text-secondary);
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid var(--border);
-}
+    .hero h1 {
+      font-size: 44px;
+      font-weight: 800;
+      line-height: 1.12;
+      letter-spacing: -0.025em;
+      color: var(--text);
+    }
 
-/* Details tab */
-.details-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-.detail-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 14px;
-  text-align: center;
-}
-.detail-value {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--accent);
-}
-.detail-label {
-  font-size: 10px;
-  color: var(--text-muted);
-  margin-top: 6px;
-}
-.timeline {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-}
-.timeline-row {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-  gap: 12px;
-}
-.timeline-row:last-child {
-  border-bottom: none;
-}
-.timeline-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-.timeline-label {
-  flex: 1;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-.timeline-value {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  color: var(--text-primary);
-}
+    .text-gradient {
+      background: linear-gradient(135deg, var(--accent), var(--blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
 
-/* Settings overlay */
-#settings-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.8);
-  backdrop-filter: blur(8px);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 200;
-}
-#settings-overlay.visible {
-  display: flex;
-}
-.settings-modal {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 28px;
-  width: 420px;
-}
-.settings-modal h3 {
-  font-size: 18px;
-  margin-bottom: 20px;
-}
-.settings-field {
-  margin-bottom: 16px;
-}
-.settings-field label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-muted);
-  display: block;
-  margin-bottom: 6px;
-}
-.settings-field input {
-  width: 100%;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-  color: var(--text-primary);
-}
-.settings-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 20px;
-}
-.btn-secondary, .btn-primary {
-  flex: 1;
-  padding: 10px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.btn-secondary {
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border);
-  color: var(--text-primary);
-}
-.btn-primary {
-  background: var(--accent);
-  border: none;
-  color: white;
-}
+    .hero-subtitle {
+      font-size: 15px;
+      line-height: 1.65;
+      color: var(--text-secondary);
+      max-width: 460px;
+    }
 
-/* Theme toggle */
-.theme-toggle {
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 6px 12px;
-  cursor: pointer;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--text-primary);
-}
+    /* Search bar */
+    .search-bar {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      max-width: 520px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 5px 5px 5px 18px;
+      gap: 10px;
+      box-shadow: var(--shadow-md);
+      transition: border-color 0.25s, box-shadow 0.25s, background-color 0.35s;
+    }
+    .search-bar:focus-within {
+      border-color: var(--accent);
+      box-shadow: var(--shadow-glow), var(--shadow-md);
+    }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-</style>
+    .search-icon { color: var(--text-muted); flex-shrink: 0; }
+
+    .search-bar input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+      min-width: 0;
+    }
+    .search-bar input::placeholder { color: var(--text-muted); }
+
+    #scan-btn {
+      padding: 10px 22px;
+      border: none;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-width: 96px;
+      height: 38px;
+      transition: filter 0.15s, box-shadow 0.2s, transform 0.1s;
+      flex-shrink: 0;
+    }
+    #scan-btn:hover:not(:disabled) {
+      filter: brightness(1.15);
+      box-shadow: 0 0 24px var(--accent-glow);
+    }
+    #scan-btn:active:not(:disabled) { transform: scale(0.97); }
+    #scan-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .spinner { animation: spin 0.75s linear infinite; }
+
+    /* ═══════════════════════════════════════════════════════
+       SCANNING VIEW
+       ═══════════════════════════════════════════════════════ */
+    .scanning-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 28px 40px;
+      min-height: 0;
+    }
+
+    .scanning-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      padding-bottom: 24px;
+    }
+
+    .scanning-header .icon-btn-sm { flex-shrink: 0; }
+    .scanning-header .icon-btn-sm:disabled { opacity: 0.3; cursor: default; }
+
+    .scanning-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: brandPulse 1.5s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+
+    /* Stepper */
+    .stepper {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 0 12px 28px;
+    }
+
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      min-width: 76px;
+    }
+
+    .step-circle {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface);
+      border: 2px solid var(--border-strong);
+      position: relative;
+      transition: background 0.35s, border-color 0.35s, box-shadow 0.35s;
+    }
+
+    .step-num {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      transition: color 0.2s;
+    }
+
+    .step-check {
+      position: absolute;
+      width: 16px; height: 16px;
+      stroke: #fff;
+      display: none;
+    }
+
+    .step.active .step-circle {
+      border-color: var(--accent);
+      background: var(--accent);
+      animation: ringPulse 2s ease-in-out infinite;
+    }
+    .step.active .step-num { color: #fff; }
+
+    .step.done .step-circle {
+      border-color: var(--green);
+      background: var(--green);
+      animation: none;
+      box-shadow: none;
+    }
+    .step.done .step-num  { display: none; }
+    .step.done .step-check { display: block; }
+
+    .step.error .step-circle {
+      border-color: var(--red);
+      background: var(--red);
+      animation: none;
+      box-shadow: none;
+    }
+    .step.error .step-num { color: #fff; }
+
+    .step-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-align: center;
+      transition: color 0.3s;
+      white-space: nowrap;
+    }
+    .step.active .step-label { color: var(--accent); font-weight: 600; }
+    .step.done   .step-label { color: var(--green); }
+    .step.error  .step-label { color: var(--red); }
+
+    .step-connector {
+      height: 2px;
+      flex: 1;
+      background: var(--border-strong);
+      margin-top: 19px;
+      min-width: 20px;
+      max-width: 72px;
+      border-radius: 1px;
+      transition: background-color 0.5s ease;
+    }
+    .step-connector.done { background: var(--green); }
+
+    /* Terminal card */
+    .terminal-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      min-height: 0;
+      transition: background-color 0.35s, border-color 0.35s;
+    }
+
+    .terminal-card.collapsed { flex: 0 0 auto; }
+    .terminal-card.collapsed #log-panel { display: none; }
+
+    .terminal-header {
+      display: flex;
+      align-items: center;
+      padding: 10px 14px;
+      gap: 10px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .terminal-dots { display: flex; gap: 5px; }
+    .terminal-dots span {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+    }
+    .terminal-dots span:nth-child(1) { background: #ef4444; }
+    .terminal-dots span:nth-child(2) { background: #fbbf24; }
+    .terminal-dots span:nth-child(3) { background: #22c55e; }
+
+    .terminal-title {
+      flex: 1;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+
+    .terminal-toggle-icon { transition: transform 0.2s ease; }
+    .terminal-card.collapsed .terminal-toggle-icon { transform: rotate(-90deg); }
+
+    #log-panel {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      line-height: 1.8;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .log-line { display: flex; gap: 10px; }
+    .log-ts   { color: var(--text-muted); flex-shrink: 0; font-size: 10px; }
+    .log-err  { color: var(--red); }
+    .log-ok   { color: var(--green); }
+    .log-info { color: var(--blue); }
+    .log-warn { color: var(--amber); }
+
+    /* ═══════════════════════════════════════════════════════
+       RESULTS VIEW
+       ═══════════════════════════════════════════════════════ */
+    #view-results { overflow-y: auto; }
+
+    .results-content {
+      padding: 28px 40px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Verdict banner */
+    .verdict {
+      border-radius: 16px;
+      padding: 28px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      transition: background 0.35s, border-color 0.35s;
+    }
+
+    .verdict.human {
+      background: linear-gradient(135deg, rgba(16,185,129,0.08) 0%, transparent 50%);
+      border: 1px solid rgba(16,185,129,0.2);
+    }
+    .verdict.bot {
+      background: linear-gradient(135deg, rgba(239,68,68,0.08) 0%, transparent 50%);
+      border: 1px solid rgba(239,68,68,0.2);
+    }
+
+    .verdict-left {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      min-width: 0;
+    }
+
+    .verdict-icon { font-size: 42px; flex-shrink: 0; }
+
+    .verdict-info { min-width: 0; }
+
+    .verdict-username {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .verdict-label {
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 3px;
+    }
+    .verdict.human .verdict-label { color: var(--green); }
+    .verdict.bot   .verdict-label { color: var(--red); }
+
+    .verdict-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .verdict-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+      min-width: 110px;
+      flex-shrink: 0;
+    }
+
+    .verdict-pct {
+      font-size: 38px;
+      font-weight: 800;
+      font-family: 'Inter', sans-serif;
+      letter-spacing: -0.02em;
+    }
+
+    /* Probability bar */
+    .prob-bar-track {
+      width: 100%;
+      height: 5px;
+      background: var(--border-strong);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .prob-bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* Analysis grid */
+    .analysis-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .analysis-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.25s, background-color 0.35s;
+    }
+    .analysis-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--border-strong);
+      box-shadow: var(--shadow-md);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-icon { font-size: 16px; }
+    .card-title {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      color: var(--text);
+    }
+
+    .card-badge {
+      font-size: 10px;
+      padding: 3px 10px;
+      border-radius: 99px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .card-badge.human { background: var(--green-soft); color: var(--green); }
+    .card-badge.bot   { background: var(--red-soft);   color: var(--red); }
+
+    .card-prob {
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .card-desc {
+      font-size: 11px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+    }
+
+    .indicators {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+    .indicator-tag {
+      display: inline-flex;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: var(--surface-hover);
+      font-size: 10px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      transition: background-color 0.35s;
+    }
+
+    /* Scan another button */
+    #scan-another {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 28px;
+      border-radius: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+      align-self: center;
+      margin-top: 4px;
+    }
+    #scan-another:hover {
+      background: var(--surface-hover);
+      border-color: var(--border-strong);
+      color: var(--text);
+    }
+    #scan-another:active { transform: scale(0.97); }
+
+    /* ═══════════════════════════════════════════════════════
+       SETTINGS MODAL
+       ═══════════════════════════════════════════════════════ */
+    #settings-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    #settings-overlay.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .settings-card {
+      background: var(--surface);
+      border: 1px solid var(--border-strong);
+      border-radius: 18px;
+      padding: 28px;
+      width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: var(--shadow-lg);
+      transform: scale(0.94) translateY(8px);
+      transition: transform 0.3s ease, background-color 0.35s, border-color 0.35s;
+    }
+    #settings-overlay.visible .settings-card {
+      transform: scale(1) translateY(0);
+    }
+
+    .settings-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .settings-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .settings-field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .settings-field label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .settings-field input {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-strong);
+      border-radius: 9px;
+      padding: 10px 14px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .settings-field input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    .settings-field input::placeholder { color: var(--text-muted); }
+
+    .settings-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      padding-top: 4px;
+    }
+
+    .btn-secondary-sm {
+      padding: 9px 20px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .btn-secondary-sm:hover { background: var(--surface-hover); color: var(--text); border-color: var(--border-strong); }
+
+    .btn-primary-sm {
+      padding: 9px 20px;
+      border-radius: 9px;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: filter 0.15s, box-shadow 0.2s;
+    }
+    .btn-primary-sm:hover { filter: brightness(1.12); box-shadow: 0 0 16px var(--accent-glow); }
+
+    /* ═══════════════════════════════════════════════════════
+       ANIMATIONS
+       ═══════════════════════════════════════════════════════ */
+    @keyframes brandPulse {
+      0%, 100% { box-shadow: 0 0 6px var(--accent-glow); }
+      50%      { box-shadow: 0 0 18px var(--accent-glow); }
+    }
+
+    @keyframes ringPulse {
+      0%, 100% { box-shadow: 0 0 0 4px var(--accent-glow); }
+      50%      { box-shadow: 0 0 0 10px transparent; }
+    }
+
+    @keyframes breathe {
+      0%, 100% { opacity: 0.35; transform: scale(1); }
+      50%      { opacity: 0.75; transform: scale(1.12); }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .fade-in {
+      animation: fadeUp 0.5s ease both;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       UTILITIES
+       ═══════════════════════════════════════════════════════ */
+    .hidden { display: none !important; }
+  </style>
 </head>
 <body>
 
-<div id="titlebar">
-  <div class="brand">
-    <div class="brand-icon">🎯</div> 
-    <div class="brand-text">Intelli <span>Trace</span></div>
-  </div>
-  <div style="display: flex; gap: 12px; -webkit-app-region: no-drag;">
-    <button class="theme-toggle" id="themeToggle">🌙 Dark</button>
-    <div class="window-controls">
-      <button class="win-btn" id="minimizeBtn"><svg viewBox="0 0 10 2"><line x1="0" y1="1" x2="10" y2="1" stroke-width="1.5"/></svg></button>
-      <button class="win-btn" id="maximizeBtn"><svg viewBox="0 0 10 10"><rect x="1" y="1" width="8" height="8" stroke-width="1.5"/></svg></button>
-      <button class="win-btn close" id="closeBtn"><svg viewBox="0 0 10 10"><line x1="1" y1="1" x2="9" y2="9" stroke-width="1.5"/><line x1="9" y1="1" x2="1" y2="9" stroke-width="1.5"/></svg></button>
+  <!-- ── TOPBAR ───────────────────────────────────────── -->
+  <nav id="topbar">
+    <div class="topbar-brand">
+      <div class="brand-dot"></div>
+      <span>Intellitrace</span>
     </div>
-  </div>
-</div>
+    <div class="topbar-actions">
+      <!-- Theme toggle -->
+      <button id="theme-toggle" class="icon-btn" title="Toggle theme">
+        <svg class="theme-icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg class="theme-icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+      <!-- Settings -->
+      <button id="settings-toggle" class="icon-btn" title="API Settings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+        </svg>
+      </button>
 
-<div id="app">
-  <aside id="sidebar">
-    <div class="sidebar-content">
-      <div>
-        <div class="section-label">Target</div>
-        <div class="input-group">
-          <span class="input-prefix">u/</span>
-          <input id="username-input" type="text" placeholder="username" autocomplete="off" />
-        </div>
-        <button id="scan-btn">Run Analysis</button>
-      </div>
-      <div>
-        <div class="section-label">Pipeline</div>
-        <div class="pipeline-list">
-          <div class="pipeline-item" data-stage="scraping"><div class="pipeline-num">1</div><span class="pipeline-name">Data Collection</span><div class="pipeline-spinner"></div></div>
-          <div class="pipeline-item" data-stage="ideology"><div class="pipeline-num">2</div><span class="pipeline-name">Ideology Model</span><div class="pipeline-spinner"></div></div>
-          <div class="pipeline-item" data-stage="aigen"><div class="pipeline-num">3</div><span class="pipeline-name">AI Text Detection</span><div class="pipeline-spinner"></div></div>
-          <div class="pipeline-item" data-stage="frequency"><div class="pipeline-num">4</div><span class="pipeline-name">Frequency Analysis</span><div class="pipeline-spinner"></div></div>
-          <div class="pipeline-item" data-stage="rhythm"><div class="pipeline-num">5</div><span class="pipeline-name">Rhythm Analysis</span><div class="pipeline-spinner"></div></div>
-          <div class="pipeline-item" data-stage="done"><div class="pipeline-num">✓</div><span class="pipeline-name">Complete</span><div class="pipeline-spinner"></div></div>
-        </div>
-      </div>
-      <div class="sidebar-footer">
-        <button class="footer-btn" id="settings-toggle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>API Settings</button>
-        <button class="footer-btn" id="clear-btn"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>Clear</button>
-      </div>
-    </div>
-  </aside>
+      <div class="topbar-divider"></div>
 
-  <main id="main-content">
-    <div id="empty-state">
-      <div class="empty-icon">🔍</div>
-      <div class="empty-title">Reddit Bot Detection</div>
-      <div class="empty-desc">Enter a username to analyze ideology, AI text patterns, frequency, and posting rhythm.</div>
+      <!-- Window controls -->
+      <div class="window-controls">
+        <button title="Minimize" onclick="electronAPI.minimize()">
+          <svg viewBox="0 0 10 2"><line x1="0" y1="1" x2="10" y2="1"/></svg>
+        </button>
+        <button title="Maximize" onclick="electronAPI.maximize()">
+          <svg viewBox="0 0 10 10"><rect x="1" y="1" width="8" height="8"/></svg>
+        </button>
+        <button class="btn-close" title="Close" onclick="electronAPI.close()">
+          <svg viewBox="0 0 10 10"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg>
+        </button>
+      </div>
     </div>
-    <div id="log-panel"></div>
-    <div id="result-panel"></div>
-    <div id="settings-overlay"><div class="settings-modal"><h3>API Configuration</h3><div class="settings-field"><label>Base URL</label><input id="cfg-url" type="text" placeholder="http://localhost:8000" /></div><div class="settings-field"><label>API Key</label><input id="cfg-key" type="password" placeholder="your-api-key" /></div><div class="settings-actions"><button class="btn-secondary" id="settings-cancel">Cancel</button><button class="btn-primary" id="settings-save">Save</button></div></div></div>
+  </nav>
+
+  <!-- ── APP ──────────────────────────────────────────── -->
+  <main id="app">
+
+    <!-- VIEW: READY ───────────────────────────────────── -->
+    <section id="view-ready" class="view active">
+      <div class="hero-glow"></div>
+      <div class="hero">
+        <span class="hero-badge">⬡ AI-Powered Detection</span>
+        <h1>Detect Reddit Bots<br><span class="text-gradient">Instantly</span></h1>
+        <p class="hero-subtitle">Analyze any Reddit user with multi-model AI — ideology patterns, text authenticity, posting frequency, and behavioral rhythms.</p>
+        <div class="search-bar" id="search-bar">
+          <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input id="username-input" type="text" placeholder="Enter Reddit username…" autocomplete="off" spellcheck="false" />
+          <button id="scan-btn">
+            <span id="scan-btn-text">Analyze</span>
+            <svg id="scan-spinner" class="spinner hidden" width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.5" stroke-dasharray="20 37" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW: SCANNING ────────────────────────────────── -->
+    <section id="view-scanning" class="view">
+      <div class="scanning-content">
+        <div class="scanning-header">
+          <button id="scan-back" class="icon-btn-sm" title="Back to search" disabled>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <span class="scanning-dot"></span>
+          <span>Analyzing <strong id="scanning-username"></strong></span>
+        </div>
+
+        <!-- Stepper -->
+        <div class="stepper" id="stepper">
+          <div class="step" data-step="scraping">
+            <div class="step-circle"><span class="step-num">1</span><svg class="step-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span class="step-label">Data Collection</span>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step" data-step="ideology">
+            <div class="step-circle"><span class="step-num">2</span><svg class="step-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span class="step-label">Ideology</span>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step" data-step="aigen">
+            <div class="step-circle"><span class="step-num">3</span><svg class="step-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span class="step-label">AI Text</span>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step" data-step="frequency">
+            <div class="step-circle"><span class="step-num">4</span><svg class="step-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span class="step-label">Frequency</span>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step" data-step="rhythm">
+            <div class="step-circle"><span class="step-num">5</span><svg class="step-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span class="step-label">Rhythm</span>
+          </div>
+        </div>
+
+        <!-- Terminal -->
+        <div class="terminal-card" id="terminal-card">
+          <div class="terminal-header">
+            <div class="terminal-dots"><span></span><span></span><span></span></div>
+            <span class="terminal-title">Live Output</span>
+            <button id="terminal-toggle" class="icon-btn-sm" title="Toggle terminal">
+              <svg class="terminal-toggle-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+          </div>
+          <div id="log-panel"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW: RESULTS ─────────────────────────────────── -->
+    <section id="view-results" class="view">
+      <div class="results-content">
+        <div id="result-panel"></div>
+        <button id="scan-another">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          Scan Another User
+        </button>
+      </div>
+    </section>
+
   </main>
-</div>
 
-<script>
-// ── STATE ─────────────────────────────────────────────────────────────────────
-
-let settings = { apiUrl: "http://localhost:8000", apiKey: "" };
-let scanning  = false;
-
-// ── ELEMENTS ──────────────────────────────────────────────────────────────────
-
-const usernameInput  = document.getElementById("username-input");
-const scanBtn        = document.getElementById("scan-btn");
-const emptyState     = document.getElementById("empty-state");
-const logPanel       = document.getElementById("log-panel");
-const resultPanel    = document.getElementById("result-panel");
-const settingsOverlay= document.getElementById("settings-overlay");
-const settingsToggle = document.getElementById("settings-toggle");
-const settingsSave   = document.getElementById("settings-save");
-const settingsCancel = document.getElementById("settings-cancel");
-const cfgUrl         = document.getElementById("cfg-url");
-const cfgKey         = document.getElementById("cfg-key");
-
-const stages = {
-  scraping:  document.querySelector('[data-stage="scraping"]'),
-  ideology:  document.querySelector('[data-stage="ideology"]'),
-  aigen:     document.querySelector('[data-stage="aigen"]'),
-  frequency: document.querySelector('[data-stage="frequency"]'),
-  rhythm:    document.querySelector('[data-stage="rhythm"]'),
-  done:      document.querySelector('[data-stage="done"]'),
-};
-
-// ── INIT ──────────────────────────────────────────────────────────────────────
-
-(async () => {
-  if (window.electronAPI) {
-    settings = await electronAPI.loadSettings();
-    cfgUrl.value = settings.apiUrl;
-    cfgKey.value = settings.apiKey;
-  }
-})();
-
-// ── HELPERS ───────────────────────────────────────────────────────────────────
-
-function setStage(name, state) {
-  const el = stages[name];
-  if (!el) return;
-  el.classList.remove("active", "done", "error");
-  if (state) el.classList.add(state);
-}
-
-function resetAllStages() {
-  Object.keys(stages).forEach((k) => setStage(k, null));
-}
-
-function showPanel(which) {
-  emptyState.style.display   = "none";
-  logPanel.classList.remove("visible");
-  resultPanel.classList.remove("visible");
-  if (which === "log")    logPanel.classList.add("visible");
-  if (which === "result") resultPanel.classList.add("visible");
-  if (which === "empty")  emptyState.style.display = "flex";
-}
-
-function log(text, type = "info") {
-  const ts = new Date().toLocaleTimeString("en-GB", { hour12: false });
-  const line = document.createElement("div");
-  line.className = `log-entry`;
-  line.innerHTML = `<span class="log-time">[${ts}]</span><span class="log-level level-${type}">${type.toUpperCase()}</span><span class="log-message">${escHtml(text)}</span>`;
-  logPanel.appendChild(line);
-  logPanel.scrollTop = logPanel.scrollHeight;
-}
-
-function escHtml(s) {
-  return String(s)
-    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-}
-
-function pct(v) { return `${Math.round(v * 100)}%`; }
-
-function probColor(v) {
-  if (v < 0.35) return "#10b981";
-  if (v < 0.6)  return "#f59e0b";
-  return "#ef4444";
-}
-
-function setBusy(busy) {
-  scanning = busy;
-  scanBtn.disabled = busy;
-  usernameInput.disabled = busy;
-  scanBtn.textContent = busy ? "⏳ Scanning…" : "Run Analysis";
-}
-
-// ── SETTINGS ─────────────────────────────────────────────────────────────────
-
-settingsToggle.addEventListener("click", () => {
-  settingsOverlay.classList.add("visible");
-});
-settingsCancel.addEventListener("click", () => {
-  settingsOverlay.classList.remove("visible");
-});
-settingsSave.addEventListener("click", async () => {
-  settings.apiUrl = cfgUrl.value.replace(/\/$/, "");
-  settings.apiKey = cfgKey.value;
-  if (window.electronAPI) {
-    await electronAPI.saveSettings(settings);
-  }
-  settingsOverlay.classList.remove("visible");
-  log("Settings saved.", "ok");
-});
-
-document.getElementById("clear-btn").addEventListener("click", () => {
-  showPanel("empty");
-  logPanel.innerHTML = "";
-  resultPanel.innerHTML = "";
-  resetAllStages();
-});
-
-// ── THEME TOGGLE ─────────────────────────────────────────────────────────────
-
-let isDark = true;
-const themeToggle = document.getElementById("themeToggle");
-themeToggle.addEventListener("click", () => {
-  isDark = !isDark;
-  document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
-  themeToggle.textContent = isDark ? "🌙 Dark" : "☀️ Light";
-});
-
-// ── SCAN FLOW ─────────────────────────────────────────────────────────────────
-
-scanBtn.addEventListener("click", startScan);
-usernameInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") startScan();
-});
-
-async function startScan() {
-  const raw = usernameInput.value.trim().replace(/^u\//i, "");
-  if (!raw || scanning) return;
-
-  const username = raw;
-  setBusy(true);
-  resetAllStages();
-  logPanel.innerHTML = "";
-  resultPanel.innerHTML = "";
-  showPanel("log");
-
-  log(`Starting analysis for u/${username}`, "info");
-
-  // ── STAGE 1: run scraper (if electron available) ──────────────────────────
-
-  setStage("scraping", "active");
-  
-  let payload = null;
-  
-  if (window.electronAPI) {
-    log("Launching Scrapingtool.exe…", "warn");
-    const scraperOk = await runScraper(username);
-    if (!scraperOk) {
-      setBusy(false);
-      return;
-    }
-    setStage("scraping", "done");
-    log("Scraper finished — reading JSON…", "ok");
-
-    try {
-      payload = await electronAPI.readJson(username);
-      log(`Loaded payload for ${username}`, "ok");
-    } catch (err) {
-      log(`Failed to read JSON: ${err.message}`, "err");
-      setBusy(false);
-      return;
-    }
-  } else {
-    // Demo mode - use mock data
-    log("Running in demo mode (no scraper)", "warn");
-    await delay(800);
-    setStage("scraping", "done");
-    payload = { username: username, mock: true };
-  }
-
-  // ── STAGE 2–6: stream from FastAPI ───────────────────────────────────────
-
-  log("Connecting to analysis API…", "info");
-  await streamFromApi(username, payload);
-
-  setBusy(false);
-}
-
-function runScraper(username) {
-  return new Promise((resolve) => {
-    const cleanup = electronAPI.onScraperEvent((ev) => {
-      if (ev.event === "stdout") {
-        log(ev.data.trim(), "info");
-      } else if (ev.event === "stderr") {
-        log(ev.data.trim(), "warn");
-      } else if (ev.event === "done") {
-        cleanup();
-        resolve(true);
-      } else if (ev.event === "error") {
-        log(`Scraper error: ${ev.data}`, "err");
-        setStage("scraping", "error");
-        cleanup();
-        resolve(false);
-      }
-    });
-    electronAPI.runScraper(username);
-  });
-}
-
-function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-// ── SSE STREAM ────────────────────────────────────────────────────────────────
-
-async function streamFromApi(username, payload) {
-  const url = `${settings.apiUrl}/api/v1/process-user`;
-
-  let response;
-  try {
-    response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-Key": settings.apiKey,
-      },
-      body: JSON.stringify(payload),
-    });
-  } catch (err) {
-    log(`Network error: ${err.message}`, "err");
-    // Fallback to demo mode if API not available
-    if (!window.electronAPI) {
-      await demoAnalysis(username);
-    }
-    return;
-  }
-
-  if (!response.ok) {
-    const txt = await response.text().catch(() => "");
-    log(`API returned ${response.status}: ${txt}`, "err");
-    if (!window.electronAPI) {
-      await demoAnalysis(username);
-    }
-    return;
-  }
-
-  const reader  = response.body.getReader();
-  const decoder = new TextDecoder();
-  let   buffer  = "";
-
-  const stepStageMap = {
-    ideology:  "ideology",
-    aigen:     "aigen",
-    frequency: "frequency",
-    rhythm:    "rhythm",
-    done:      "done",
-    error:     "done",
-  };
-
-  let prevStep = null;
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop();
-
-    for (const line of lines) {
-      if (!line.startsWith("data: ")) continue;
-      let event;
-      try { event = JSON.parse(line.slice(6)); } catch { continue; }
-
-      const step = event.step;
-
-      if (prevStep && prevStep !== step) {
-        if (prevStep !== "done" && prevStep !== "error") {
-          setStage(stepStageMap[prevStep] ?? prevStep, "done");
-        }
-      }
-
-      if (step === "done") {
-        log("Analysis complete!", "ok");
-        setStage("done", "done");
-        renderResult(event.result);
-        return;
-      }
-
-      if (step === "error") {
-        log(`Error: ${event.message}`, "err");
-        setStage("done", "error");
-        return;
-      }
-
-      setStage(stepStageMap[step] ?? step, "active");
-      log(event.message, "info");
-      prevStep = step;
-    }
-  }
-}
-
-// ── DEMO MODE (fallback when API not available) ─────────────────────────────
-
-async function demoAnalysis(username) {
-  setStage("ideology", "active");
-  log("Running ideology classification...", "info");
-  await delay(600);
-  setStage("ideology", "done");
-
-  setStage("aigen", "active");
-  log("Detecting AI-generated text patterns...", "info");
-  await delay(650);
-  setStage("aigen", "done");
-
-  setStage("frequency", "active");
-  log("Analyzing posting frequency...", "info");
-  await delay(500);
-  setStage("frequency", "done");
-
-  setStage("rhythm", "active");
-  log("Analyzing posting rhythm patterns...", "info");
-  await delay(550);
-  setStage("rhythm", "done");
-
-  setStage("done", "done");
-  log("Analysis complete (demo mode)", "ok");
-
-  const result = {
-    username: username,
-    overall_probability: 0.73,
-    is_bot_overall: true,
-    full_analysis: {
-      ideology: {
-        bot_probability: 0.82,
-        pattern_description: "High ideological consistency suggests potential agenda-driven posting patterns.",
-        key_indicators: ["Consistent political stance", "Rapid response to ideological topics"]
-      },
-      ai_authenticity: {
-        ai_probability: 0.64,
-        reasoning: "Moderate AI-like patterns — language shows unusual coherence and low perplexity."
-      },
-      frequency: {
-        bot_probability: 0.88
-      },
-      rhythm: {
-        bot_probability: 0.58
-      }
-    }
-  };
-  renderResult(result);
-}
-
-// ── RESULT RENDERER ───────────────────────────────────────────────────────────
-
-function renderResult(result) {
-  resultPanel.innerHTML = "";
-  showPanel("result");
-
-  const prob   = result.overall_probability ?? 0;
-  const isBot  = result.is_bot_overall ?? (prob >= 0.5);
-  const fa     = result.full_analysis ?? {};
-
-  // Verdict banner
-  const banner = document.createElement("div");
-  banner.className = `verdict-card ${isBot ? "high-risk" : "low-risk"} fade-in`;
-  banner.innerHTML = `
-    <div class="verdict-icon">${isBot ? "🤖" : "👤"}</div>
-    <div class="verdict-info">
-      <div class="verdict-badge">DETECTION RESULT</div>
-      <div class="verdict-title">u/${escHtml(result.username)} is likely a ${isBot ? "BOT" : "HUMAN"}</div>
-      <div class="verdict-desc">Overall bot probability: ${pct(prob)}</div>
-    </div>
-    <div class="verdict-score">
-      <div class="score-circle">
-        <div class="score-value">${pct(prob)}</div>
+  <!-- ── SETTINGS MODAL ──────────────────────────────── -->
+  <div id="settings-overlay">
+    <div class="settings-card">
+      <div class="settings-header">
+        <h2 class="settings-title">API Configuration</h2>
+        <button id="settings-close" class="icon-btn-sm" title="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="settings-field">
+        <label for="cfg-url">API Base URL</label>
+        <input id="cfg-url" type="text" placeholder="http://localhost:8000" />
+      </div>
+      <div class="settings-field">
+        <label for="cfg-key">API Key</label>
+        <input id="cfg-key" type="password" placeholder="Enter your API key…" />
+      </div>
+      <div class="settings-actions">
+        <button id="settings-cancel" class="btn-secondary-sm">Cancel</button>
+        <button id="settings-save" class="btn-primary-sm">Save Changes</button>
       </div>
     </div>
-  `;
-  resultPanel.appendChild(banner);
+  </div>
 
-  // Confidence section
-  const confSection = document.createElement("div");
-  confSection.className = "conf-section";
-  confSection.innerHTML = `
-    <div class="conf-header"><span>Overall Bot Probability</span><span id="conf-percent">0%</span></div>
-    <div class="conf-track"><div class="conf-fill" id="conf-fill-bar"></div></div>
-  `;
-  resultPanel.appendChild(confSection);
-
-  const percent = Math.round(prob * 100);
-  const fillColor = probColor(prob);
-  document.getElementById("conf-percent").innerText = percent + "%";
-  setTimeout(() => {
-    const bar = document.getElementById("conf-fill-bar");
-    if (bar) { bar.style.width = percent + "%"; bar.style.background = fillColor; }
-  }, 50);
-
-  // Analysis cards grid
-  const grid = document.createElement("div");
-  grid.className = "metrics-grid fade-in";
-
-  const cards = [
-    {
-      title: "Ideology",
-      data: fa.ideology,
-      probKey: "bot_probability",
-      extra: (d) => d?.pattern_description ? `<div class="metric-interpretation">${escHtml(d.pattern_description)}</div>` : "",
-    },
-    {
-      title: "AI Text",
-      data: fa.ai_authenticity,
-      probKey: "ai_probability",
-      extra: (d) => d?.reasoning ? `<div class="metric-interpretation">${escHtml(d.reasoning)}</div>` : "",
-    },
-    {
-      title: "Frequency",
-      data: fa.frequency,
-      probKey: "bot_probability",
-      extra: () => "",
-    },
-    {
-      title: "Rhythm",
-      data: fa.rhythm,
-      probKey: "bot_probability",
-      extra: () => "",
-    },
-  ];
-
-  cards.forEach(({ title, data, probKey, extra }, i) => {
-    if (!data) return;
-    const p      = data[probKey] ?? 0;
-    const botish = p >= 0.5;
-    const scorePct = Math.round(p * 100);
-    const badgeClass = p >= 0.7 ? "badge-high" : (p >= 0.4 ? "badge-medium" : "badge-low");
-    const badgeText = p >= 0.7 ? "Elevated" : (p >= 0.4 ? "Moderate" : "Low");
-
-    const card = document.createElement("div");
-    card.className = "metric-card fade-in";
-    card.style.animationDelay = `${i * 0.08}s`;
-
-    card.innerHTML = `
-      <div class="metric-header">
-        <span class="metric-name">${title}</span>
-        <span class="metric-badge ${badgeClass}">${badgeText}</span>
-      </div>
-      <div class="metric-score">${scorePct}%</div>
-      <div class="metric-bar">
-        <div class="metric-bar-fill card-bar-${i}" data-width="${scorePct}" style="background:${probColor(p)};width:0%"></div>
-      </div>
-      ${extra(data)}
-    `;
-    grid.appendChild(card);
-  });
-
-  resultPanel.appendChild(grid);
-
-  // Animate card bars
-  setTimeout(() => {
-    document.querySelectorAll('.metric-bar-fill').forEach(el => {
-      const w = el.getAttribute('data-width');
-      if (w) el.style.width = w + '%';
-    });
-  }, 100);
-
-  // Details grid (mock data - replace with real data from API)
-  const detailsGrid = document.createElement("div");
-  detailsGrid.className = "details-grid";
-  detailsGrid.innerHTML = `
-    
-  `;
-  
-  const timeline = document.createElement("div");
-  timeline.className = "timeline";
-  timeline.innerHTML = ``;
-
-  // Add details section after grid
-  const detailsSection = document.createElement("div");
-  detailsSection.style.marginTop = "20px";
-  detailsSection.appendChild(detailsGrid);
-  detailsSection.appendChild(timeline);
-  resultPanel.appendChild(detailsSection);
-}
-
-// Window controls
-if (window.electronAPI) {
-  document.getElementById('minimizeBtn')?.addEventListener('click', () => window.electronAPI.minimize());
-  document.getElementById('maximizeBtn')?.addEventListener('click', () => window.electronAPI.maximize());
-  document.getElementById('closeBtn')?.addEventListener('click', () => window.electronAPI.close());
-}
-</script>
+  <script src="renderer.js"></script>
 </body>
 </html>
