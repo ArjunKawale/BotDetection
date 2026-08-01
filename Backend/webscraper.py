@@ -12,8 +12,8 @@ from playwright.async_api import async_playwright
 
 def get_chrome_path() -> Path:
     """
-    Locates the bundled Chromium executable whether running from source
-    or as a frozen PyInstaller binary on Linux.
+    Locates the bundled Chromium executable across Windows and Linux,
+    whether running from source or frozen PyInstaller binary.
     """
     if getattr(sys, "frozen", False):
         # PyInstaller extracts to sys._MEIPASS in --onefile mode,
@@ -29,12 +29,25 @@ def get_chrome_path() -> Path:
         )
 
     chromium_dir = matches[0]
-    chrome_exec = chromium_dir / "chrome-linux64" / "chrome"
 
-    if not chrome_exec.exists():
-        raise FileNotFoundError(f"Chromium binary not found at expected path: {chrome_exec}")
+    # Platform-specific binary lookup
+    if sys.platform == "win32":
+        possible_paths = [
+            chromium_dir / "chrome-win64" / "chrome.exe",
+            chromium_dir / "chrome-win" / "chrome.exe",
+        ]
+    else:
+        possible_paths = [
+            chromium_dir / "chrome-linux64" / "chrome",
+        ]
 
-    return chrome_exec
+    for chrome_exec in possible_paths:
+        if chrome_exec.exists():
+            return chrome_exec
+
+    raise FileNotFoundError(
+        f"Chromium binary not found in '{chromium_dir}'. Checked: {[str(p) for p in possible_paths]}"
+    )
 
 
 async def _scrape_hybrid_data_async(username: str):
