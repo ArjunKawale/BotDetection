@@ -3,7 +3,7 @@ import json
 import os
 import sys
 
-# Import your existing functions
+# Import your existing functions directly without runtime browser installation
 from webScraperfn import scrape_and_save_user_data
 from ConvText import (
     extract_messages_from_file,
@@ -38,9 +38,6 @@ def process_reddit_user(username):
         }
 
         # 4. Save the cleanly formatted data
-        # 4. Save the cleanly formatted data
-        
-        # Create the directory if it doesn't exist
         os.makedirs("UserData", exist_ok=True) 
         
         output_file = os.path.join("UserData", f"formatted_{username}.json")
@@ -54,7 +51,6 @@ def process_reddit_user(username):
         sys.exit(1)
 
 if __name__ == "__main__":
-    # Setup argument parsing so it can be run from the command line
     parser = argparse.ArgumentParser(description="Scrape and format Reddit user data.")
     parser.add_argument("username", help="The exact Reddit username to scrape")
     

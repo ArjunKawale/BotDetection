@@ -6,17 +6,16 @@ const fs = require("fs");
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 
 /**
- * Automatically detects if the app is running in dev or production
- * and points to the correct folder for Scrapingtool.exe
+ * Automatically detects where the scraper binary is located.
+ * Checks the local project directory first (for development or Linux system-electron),
+ * then falls back to process.resourcesPath (for packaged production builds).
  */
 function getResourcePath(...segments) {
-  if (app.isPackaged) {
-    // In production, extraResources are tucked into the 'resources' folder
-    return path.join(process.resourcesPath, ...segments);
-  } else {
-    // In development, they are in the project root next to main.js
-    return path.join(__dirname, ...segments);
+  const devPath = path.join(__dirname, ...segments);
+  if (fs.existsSync(devPath)) {
+    return devPath;
   }
+  return path.join(process.resourcesPath, ...segments);
 }
 
 // ── WINDOW MANAGEMENT ────────────────────────────────────────────────────────
@@ -57,26 +56,32 @@ ipcMain.on("window-maximize", () =>
 ipcMain.on("window-close", () => win?.close());
 
 // ── GLOBAL STORAGE PATH ──────────────────────────────────────────────────────
-// This points to %APPDATA%/reddit-bot-detector/ which is always writable
+// Windows: %APPDATA%/reddit-bot-detector/
+// Linux:   ~/.config/reddit-bot-detector/
 const userStorageDir = app.getPath("userData");
 
 // ── IPC: RUN SCRAPER EXE ─────────────────────────────────────────────────────
 
 ipcMain.on("run-scraper", (event, { username }) => {
-  const exePath = getResourcePath("Scrapingtool.exe");
+  // Use .exe on Windows, extensionless binary on Linux/macOS
+  const execName = process.platform === "win32" ? "Scrapingtool.exe" : "Scrapingtool";
+
+  // CHANGED: Pass BOTH the folder name ("Scrapingtool") AND the executable name
+  // This resolves to -> Intellitrace/Scrapingtool/Scrapingtool
+  const exePath = getResourcePath("Scrapingtool", execName);
 
   // Safety check to ensure the scraper exists
   if (!fs.existsSync(exePath)) {
     event.sender.send("scraper-event", {
       event: "error",
-      data: `Scrapingtool.exe not found at:\n${exePath}`,
+      data: `${execName} not found at:\n${exePath}`,
     });
     return;
   }
 
   // Spawn the process
   const proc = spawn(exePath, [username], {
-    cwd: userStorageDir, // Run inside AppData so it can save JSON without permission errors
+    cwd: userStorageDir, // Run inside userData directory so it can save JSON without permission errors
     env: { ...process.env, PYTHONIOENCODING: "utf-8" } // Force UTF-8 to handle emojis
   });
 
