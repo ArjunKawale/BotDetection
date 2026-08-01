@@ -3,6 +3,10 @@ import json
 import os
 import sys
 
+# Force UTF-8 encoding for standard output to prevent charmap errors on Windows terminals
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding='utf-8')
+
 # Import your existing functions directly without runtime browser installation
 from webScraperfn import scrape_and_save_user_data
 from ConvText import (

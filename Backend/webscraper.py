@@ -9,11 +9,14 @@ from collections import defaultdict
 from pathlib import Path
 from playwright.async_api import async_playwright
 
+# Force UTF-8 encoding for standard output to prevent charmap errors on Windows terminals
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding='utf-8')
 
 def get_chrome_path() -> Path:
     """
-    Locates the bundled Chromium executable across Windows and Linux,
-    whether running from source or frozen PyInstaller binary.
+    Locates the bundled Chromium executable whether running from source
+    or as a frozen PyInstaller binary on Windows or Linux.
     """
     if getattr(sys, "frozen", False):
         # PyInstaller extracts to sys._MEIPASS in --onefile mode,
@@ -30,24 +33,25 @@ def get_chrome_path() -> Path:
 
     chromium_dir = matches[0]
 
-    # Platform-specific binary lookup
+    # Dynamically resolve based on Operating System
     if sys.platform == "win32":
-        possible_paths = [
-            chromium_dir / "chrome-win64" / "chrome.exe",
-            chromium_dir / "chrome-win" / "chrome.exe",
-        ]
+        win64_path = chromium_dir / "chrome-win64" / "chrome.exe"
+        win_path = chromium_dir / "chrome-win" / "chrome.exe"
+        
+        if win64_path.exists():
+            chrome_exec = win64_path
+        elif win_path.exists():
+            chrome_exec = win_path
+        else:
+            chrome_exec = win64_path # Fallback to trigger the exact error below
     else:
-        possible_paths = [
-            chromium_dir / "chrome-linux64" / "chrome",
-        ]
+        # Linux / MacOS fallback
+        chrome_exec = chromium_dir / "chrome-linux64" / "chrome"
 
-    for chrome_exec in possible_paths:
-        if chrome_exec.exists():
-            return chrome_exec
+    if not chrome_exec.exists():
+        raise FileNotFoundError(f"Chromium binary not found at expected path: {chrome_exec}")
 
-    raise FileNotFoundError(
-        f"Chromium binary not found in '{chromium_dir}'. Checked: {[str(p) for p in possible_paths]}"
-    )
+    return chrome_exec
 
 
 async def _scrape_hybrid_data_async(username: str):
@@ -60,7 +64,7 @@ async def _scrape_hybrid_data_async(username: str):
     print(f" Processing user /u/{username} via Playwright DOM scraping...")
 
     async with async_playwright() as p:
-        # Launch using the bundled Chromium binary path
+        # Launch using the dynamically resolved bundled Chromium binary path
         browser = await p.chromium.launch(
             executable_path=str(get_chrome_path()),
             headless=True,
