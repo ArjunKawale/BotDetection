@@ -24,12 +24,12 @@ let win;
 
 function createWindow() {
   win = new BrowserWindow({
-    width: 900,
-    height: 680,
+    width: 960,
+    height: 700,
     minWidth: 720,
     minHeight: 560,
     frame: false,          // custom title-bar
-    backgroundColor: "#0a0b0f",
+    backgroundColor: "#0c0e14",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
