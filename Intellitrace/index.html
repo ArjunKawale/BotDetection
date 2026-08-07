@@ -15,73 +15,56 @@
 </head>
 <body>
 
-  <!-- ── APPLICATION WINDOW HEADER ────────────────────────────────────── -->
-  <header id="topbar" class="app-header" aria-label="Application Top Bar">
-    <div class="app-header__brand">
-      <span class="status-indicator status-indicator--online" aria-hidden="true"></span>
-      <h1 class="brand-name">IntelliTrace</h1>
-      <span class="brand-version">v2.4.0</span>
-    </div>
+  <div id="app-shell" class="app-shell">
 
-    <div class="app-header__controls">
-      <div class="control-group">
-        <!-- Theme Toggle -->
-        <button id="theme-toggle" class="btn-icon" title="Toggle Interface Theme" aria-label="Toggle Color Theme">
-          <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    <aside id="sidebar" class="sidebar" aria-label="Primary Navigation">
+      <div class="sidebar__brand">
+        <span class="brand-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a4 4 0 0 1 4 4v1a5 5 0 0 1 3 4.58V13a5 5 0 0 1-2 4v1a3 3 0 0 1-3 3h-4a3 3 0 0 1-3-3v-1a5 5 0 0 1-2-4v-1.42A5 5 0 0 1 8 7V6a4 4 0 0 1 4-4z"/>
+            <line x1="9" y1="10" x2="9" y2="10.01"/>
+            <line x1="15" y1="10" x2="15" y2="10.01"/>
           </svg>
-          <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-          </svg>
-        </button>
+        </span>
+        <div class="sidebar__brand-text">
+          <h1 class="brand-name">IntelliTrace</h1>
+          <p class="brand-tagline">Reddit Bot Detection System</p>
+        </div>
+      </div>
 
-        <!-- Settings Toggle -->
-        <button id="settings-toggle" class="btn-icon" title="API Configuration" aria-label="Open Settings">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <nav class="sidebar__nav" aria-label="Sections">
+        <a href="#view-ready" class="nav-item nav-item--active" data-nav="dashboard">
+          <svg class="nav-item__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" class="nav-item" data-nav="history" style="display: none;">
+          <svg class="nav-item__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+          <span>History</span>
+        </a>
+        <button id="settings-toggle" class="nav-item nav-item--button" type="button" title="API Configuration" aria-label="Open Settings">
+          <svg class="nav-item__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
           </svg>
+          <span>Settings</span>
         </button>
+        <a href="#" class="nav-item" data-nav="about" style="display: none;">
+          <svg class="nav-item__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>About</span>
+        </a>
+      </nav>
+
+      <div class="sidebar__footer">
+        <span class="status-indicator status-indicator--online" aria-hidden="true"></span>
+        <div class="sidebar__footer-text">
+          <p class="sidebar__footer-title">IntelliTrace <span class="brand-version">v2.4.0</span></p>
+          <p class="sidebar__footer-sub">Built for academic use</p>
+        </div>
       </div>
+    </aside>
 
-      <div class="app-header__divider"></div>
+    <div class="app-main">
 
-      <!-- Native OS Window Controls -->
-      <div class="control-group window-controls">
-        <button class="btn-window" title="Minimize" aria-label="Minimize" onclick="electronAPI.minimize()">
-          <svg width="10" height="10" viewBox="0 0 10 2"><line x1="0" y1="1" x2="10" y2="1" stroke="currentColor" stroke-width="1.5"/></svg>
-        </button>
-        <button class="btn-window" title="Maximize" aria-label="Maximize" onclick="electronAPI.maximize()">
-          <svg width="10" height="10" viewBox="0 0 10 10"><rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
-        </button>
-        <button class="btn-window btn-window--close" title="Close" aria-label="Close" onclick="electronAPI.close()">
-          <svg width="10" height="10" viewBox="0 0 10 10"><line x1="1" y1="1" x2="9" y2="9" stroke="currentColor" stroke-width="1.5"/><line x1="9" y1="1" x2="1" y2="9" stroke="currentColor" stroke-width="1.5"/></svg>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- ── MAIN APPLICATION VIEWPORT ────────────────────────────────────── -->
-  <main id="app" class="app-content">
-
-    <!-- ── VIEW 1: LANDING DASHBOARD ────────────────────────────────── -->
-    <section id="view-ready" class="view view--centered active" aria-label="Home Dashboard">
-      <div class="hero-layout">
-        
-        <header class="hero-header">
-          <div class="tag-badge">
-            <span class="tag-badge__dot"></span>
-            <span class="tag-badge__label">HYBRID MULTIMODAL ARCHITECTURE</span>
-          </div>
-          <h2 class="hero-title">
-            Reddit Bot Detection<br />
-            <span class="text-highlight">Evidence-Driven Analysis</span>
-          </h2>
-          <p class="hero-description">
-            Advanced forensic account inspection utilizing Gemini 2.5 Flash semantic modeling combined with XGBoost behavioral cadence algorithms.
-          </p>
-        </header>
-
-        <!-- Search Input -->
+      <header id="topbar" class="app-header" aria-label="Application Top Bar">
         <div id="search-bar" class="search-module">
           <div class="input-wrapper">
             <div class="input-prefix">
@@ -90,178 +73,252 @@
               </svg>
               <span class="prefix-text">u/</span>
             </div>
-            <input 
-              id="username-input" 
-              class="target-input" 
-              type="text" 
-              placeholder="Target username..." 
-              autocomplete="off" 
-              spellcheck="false" 
+            <label for="username-input" class="visually-hidden">Reddit Username</label>
+            <input
+              id="username-input"
+              class="target-input"
+              type="text"
+              placeholder="example_user"
+              autocomplete="off"
+              spellcheck="false"
               aria-label="Reddit Username"
             />
           </div>
           <button id="scan-btn" class="btn-primary" type="button">
-            <span id="scan-btn-text">Execute Analysis</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span id="scan-btn-text">Analyze</span>
             <svg id="scan-spinner" class="spinner-icon hidden" width="16" height="16" viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" stroke-dasharray="20 37" stroke-linecap="round"/>
             </svg>
           </button>
         </div>
 
-        <!-- Capability Matrix -->
-        <nav class="feature-grid" aria-label="Analysis Capabilities">
-          <div class="feature-card">
-            <h3 class="feature-card__title">Ideology Mapping</h3>
-            <p class="feature-card__desc">Semantic coherence & position tracking</p>
-          </div>
-          <div class="feature-card">
-            <h3 class="feature-card__title">AI Authenticity</h3>
-            <p class="feature-card__desc">LLM syntax & structural markers</p>
-          </div>
-          <div class="feature-card">
-            <h3 class="feature-card__title">Posting Cadence</h3>
-            <p class="feature-card__desc">Frequency variance & density profiling</p>
-          </div>
-          <div class="feature-card">
-            <h3 class="feature-card__title">Behavioral Rhythm</h3>
-            <p class="feature-card__desc">Circadian gap & consistency telemetry</p>
-          </div>
-        </nav>
+        <div class="app-header__controls">
+          <div class="control-group">
+            <span class="connection-pill" title="Backend Connection Status">
+              <span class="status-indicator status-indicator--online" aria-hidden="true"></span>
+              Model Status: Online
+            </span>
 
-      </div>
-    </section>
-
-    <!-- ── VIEW 2: PIPELINE TELEMETRY ───────────────────────────────── -->
-    <section id="view-scanning" class="view" aria-label="Active Telemetry Pipeline">
-      <div class="dashboard-layout">
-        
-        <!-- Pipeline Header -->
-        <header class="panel-header">
-          <div class="panel-header__left">
-            <button id="scan-back" class="btn-icon btn-icon--subtle" title="Abort & Return" aria-label="Return to search" disabled>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            <button id="theme-toggle" class="btn-icon" title="Toggle Interface Theme" aria-label="Toggle Color Theme">
+              <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+              </svg>
+              <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+              </svg>
             </button>
-            <div class="telemetry-status">
-              <span class="status-indicator status-indicator--pulse"></span>
-              <span class="telemetry-label">Active Telemetry Target: <strong id="scanning-username" class="target-name">u/--</strong></span>
-            </div>
           </div>
-          <div class="panel-header__right">
-            <span class="system-tag">ENGINE PIPELINE RUNNING</span>
-          </div>
-        </header>
 
-        <!-- Stepper Component -->
-        <div id="stepper" class="stepper-component">
-          <div class="step" data-step="scraping">
-            <div class="step__indicator">
-              <span class="step__number">01</span>
-              <svg class="step__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-            <span class="step__label">Data Collection</span>
-          </div>
-          <!-- NextElementSibling required by renderer.js -->
-          <div class="step-connector"></div>
-          
-          <div class="step" data-step="ideology">
-            <div class="step__indicator">
-              <span class="step__number">02</span>
-              <svg class="step__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-            <span class="step__label">Ideology Analysis</span>
-          </div>
-          <div class="step-connector"></div>
+          <div class="app-header__divider"></div>
 
-          <div class="step" data-step="aigen">
-            <div class="step__indicator">
-              <span class="step__number">03</span>
-              <svg class="step__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-            <span class="step__label">AI Text Gen</span>
-          </div>
-          <div class="step-connector"></div>
-
-          <div class="step" data-step="frequency">
-            <div class="step__indicator">
-              <span class="step__number">04</span>
-              <svg class="step__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-            <span class="step__label">Posting Cadence</span>
-          </div>
-          <div class="step-connector"></div>
-
-          <div class="step" data-step="rhythm">
-            <div class="step__indicator">
-              <span class="step__number">05</span>
-              <svg class="step__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-            <span class="step__label">Behavioral Rhythm</span>
+          <div class="control-group window-controls">
+            <button class="btn-window" title="Minimize" aria-label="Minimize" onclick="electronAPI.minimize()">
+              <svg width="10" height="10" viewBox="0 0 10 2"><line x1="0" y1="1" x2="10" y2="1" stroke="currentColor" stroke-width="1.5"/></svg>
+            </button>
+            <button class="btn-window" title="Maximize" aria-label="Maximize" onclick="electronAPI.maximize()">
+              <svg width="10" height="10" viewBox="0 0 10 10"><rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+            </button>
+            <button class="btn-window btn-window--close" title="Close" aria-label="Close" onclick="electronAPI.close()">
+              <svg width="10" height="10" viewBox="0 0 10 10"><line x1="1" y1="1" x2="9" y2="9" stroke="currentColor" stroke-width="1.5"/><line x1="9" y1="1" x2="1" y2="9" stroke="currentColor" stroke-width="1.5"/></svg>
+            </button>
           </div>
         </div>
+      </header>
 
-        <!-- Terminal Component -->
-        <article id="terminal-card" class="terminal-module">
-          <header class="terminal-module__header">
-            <div class="terminal-controls">
-              <span class="control-dot"></span>
-              <span class="control-dot"></span>
-              <span class="control-dot"></span>
-            </div>
-            <h4 class="terminal-title">FORENSIC EXECUTION LOG // IPC PROCESS OUTPUT</h4>
-            <button id="terminal-toggle" class="btn-icon btn-icon--subtle terminal-collapse-btn" title="Toggle Terminal" aria-label="Toggle Terminal Visibility">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-            </button>
-          </header>
-          <div id="log-panel" class="terminal-module__viewport">
-            <!-- Dynamic Logs Injected Here by renderer.js -->
+      <main id="app" class="app-content">
+
+        <section id="view-ready" class="view view--centered active" aria-label="Home Dashboard">
+          <div class="hero-layout">
+
+            <header class="hero-header">
+              <div class="tag-badge">
+                <span class="tag-badge__dot"></span>
+                <span class="tag-badge__label">HYBRID MULTIMODAL ARCHITECTURE</span>
+              </div>
+              <h2 class="hero-title">
+                Reddit Bot Detection<br />
+                <span class="text-highlight">Evidence-Driven Analysis</span>
+              </h2>
+              <p class="hero-description">
+                Enter a Reddit username above to run a forensic account inspection using semantic modeling combined with behavioral cadence algorithms.
+              </p>
+            </header>
+
+            <nav class="feature-grid" aria-label="Analysis Capabilities">
+              <div class="feature-card">
+                <h3 class="feature-card__title">Semantic Analysis</h3>
+                <p class="feature-card__desc">Ideological coherence & content classification</p>
+              </div>
+              <div class="feature-card">
+                <h3 class="feature-card__title">AI Text Authenticity</h3>
+                <p class="feature-card__desc">LLM syntax & structural markers</p>
+              </div>
+              <div class="feature-card">
+                <h3 class="feature-card__title">Posting Frequency</h3>
+                <p class="feature-card__desc">Frequency variance & density profiling</p>
+              </div>
+              <div class="feature-card">
+                <h3 class="feature-card__title">Rhythm Analysis</h3>
+                <p class="feature-card__desc">Circadian gap & consistency telemetry</p>
+              </div>
+            </nav>
+
           </div>
-        </article>
+        </section>
 
-      </div>
-    </section>
+        <section id="view-scanning" class="view" aria-label="Active Telemetry Pipeline">
+          <div class="dashboard-layout">
 
-    <!-- ── VIEW 3: RESULTS DASHBOARD ────────────────────────────────── -->
-    <section id="view-results" class="view" aria-label="Final Analysis Report">
-      <div class="dashboard-layout results-layout">
-        
-        <!-- Report Header -->
-        <header class="panel-header">
-          <div class="panel-header__left">
-            <span class="system-tag system-tag--solid">FINAL REPORT // HYBRID VERDICT</span>
+            <header class="panel-header">
+              <div class="panel-header__left">
+                <button id="scan-back" class="btn-icon btn-icon--subtle" title="Abort & Return" aria-label="Return to search" disabled>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <div class="telemetry-status">
+                  <span class="status-indicator status-indicator--pulse"></span>
+                  <span class="telemetry-label">Active Telemetry Target: <strong id="scanning-username" class="target-name"></strong></span>
+                </div>
+              </div>
+              <div class="panel-header__right">
+                <span class="system-tag">ENGINE PIPELINE RUNNING</span>
+              </div>
+            </header>
+
+            <ol id="stepper" class="stepper-component">
+              <li class="step" data-step="scraping">
+                <div class="step__indicator">
+                  <span class="step__number">01</span>
+                  <svg class="step__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span class="step__label">Data Collection</span>
+              </li>
+              <li class="step-connector" aria-hidden="true"></li>
+
+              <li class="step" data-step="ideology">
+                <div class="step__indicator">
+                  <span class="step__number">02</span>
+                  <svg class="step__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span class="step__label">Semantic Analysis</span>
+              </li>
+              <li class="step-connector" aria-hidden="true"></li>
+
+              <li class="step" data-step="aigen">
+                <div class="step__indicator">
+                  <span class="step__number">03</span>
+                  <svg class="step__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span class="step__label">AI Text Detection</span>
+              </li>
+              <li class="step-connector" aria-hidden="true"></li>
+
+              <li class="step" data-step="frequency">
+                <div class="step__indicator">
+                  <span class="step__number">04</span>
+                  <svg class="step__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span class="step__label">Posting Frequency</span>
+              </li>
+              <li class="step-connector" aria-hidden="true"></li>
+
+              <li class="step" data-step="rhythm">
+                <div class="step__indicator">
+                  <span class="step__number">05</span>
+                  <svg class="step__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span class="step__label">Rhythm Analysis</span>
+              </li>
+            </ol>
+
+            <article id="terminal-card" class="terminal-module">
+              <header class="terminal-module__header">
+                <div class="terminal-controls">
+                  <span class="control-dot"></span>
+                  <span class="control-dot"></span>
+                  <span class="control-dot"></span>
+                </div>
+                <h4 class="terminal-title">FORENSIC EXECUTION LOG // IPC PROCESS OUTPUT</h4>
+                <button id="terminal-toggle" class="btn-icon btn-icon--subtle terminal-collapse-btn" title="Toggle Terminal" aria-label="Toggle Terminal Visibility">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+              </header>
+              <div id="log-panel" class="terminal-module__viewport">
+              </div>
+            </article>
+
           </div>
-          <div class="panel-header__right">
-            <span class="meta-tag">INSPECTED VIA SEMANTIC & BEHAVIORAL ENSEMBLE</span>
+        </section>
+
+        <section id="view-results" class="view" aria-label="Final Analysis Report">
+          <div class="dashboard-layout results-layout">
+
+            <header class="panel-header">
+              <div class="panel-header__left">
+                <span class="system-tag system-tag--solid">FINAL REPORT // HYBRID VERDICT</span>
+              </div>
+              <div class="panel-header__right">
+                <span class="meta-tag">INSPECTED VIA SEMANTIC &amp; BEHAVIORAL ENSEMBLE</span>
+              </div>
+            </header>
+
+            <div id="result-panel" class="results-container"></div>
+
+            <section class="activity-panel" aria-label="Recent Reddit Activity">
+              <header class="activity-panel__header">
+                <h3 class="activity-panel__title">Recent Reddit Activity</h3>
+              </header>
+              <div class="activity-panel__columns">
+                <article class="activity-column" aria-label="Recent Posts">
+                  <h4 class="activity-column__title">Recent Posts</h4>
+                  <div id="recentPosts" class="activity-column__scroll"></div>
+                </article>
+                <article class="activity-column" aria-label="Recent Comments">
+                  <h4 class="activity-column__title">Recent Comments</h4>
+                  <div id="recentComments" class="activity-column__scroll"></div>
+                </article>
+                <article class="activity-column" aria-label="Timeline">
+                  <h4 class="activity-column__title">Timeline</h4>
+                  <div id="timelineContainer" class="activity-column__scroll"></div>
+                </article>
+              </div>
+            </section>
+
+            <aside class="report-summary">
+              <header class="report-summary__header">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                <h4 class="summary-title">INTELLITRACE FORENSIC SUMMARY NOTES</h4>
+              </header>
+              <div class="report-summary__content">
+                <p class="disclaimer-text">
+                  Confidence percentages are computed independently across four isolated assessment layers. Overall verdict reflects weighted heuristic consensus between semantic modeling and cadence telemetry. False positives may occur; human verification is recommended for definitive action.
+                </p>
+              </div>
+            </aside>
+
+            <footer class="results-footer">
+              <button id="scan-another" class="btn-secondary" type="button">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                <span>Scan Another User Account</span>
+              </button>
+              <div class="results-footer__actions">
+                <button id="download-report-btn" class="btn-secondary" type="button">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  <span>Download Report (PDF)</span>
+                </button>
+                <button id="export-json-btn" class="btn-secondary" type="button">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                  <span>Export JSON</span>
+                </button>
+              </div>
+            </footer>
+
           </div>
-        </header>
+        </section>
 
-        <!-- Renderer dynamically injects `.verdict` banner and `.analysis-grid` here -->
-        <div id="result-panel" class="results-container"></div>
+      </main>
+    </div>
 
-        <!-- Static Summary & Disclaimers -->
-        <aside class="report-summary">
-          <header class="report-summary__header">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-            <h4 class="summary-title">INTELLITRACE FORENSIC SUMMARY NOTES</h4>
-          </header>
-          <div class="report-summary__content">
-            <p class="disclaimer-text">
-              Confidence percentages are computed independently across four isolated assessment layers. Overall verdict reflects weighted heuristic consensus between semantic modeling and cadence telemetry. False positives may occur; human verification is recommended for definitive action.
-            </p>
-          </div>
-        </aside>
-
-        <!-- Global Action Footer -->
-        <footer class="results-footer">
-          <button id="scan-another" class="btn-secondary" type="button">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-            <span>Scan Another User Account</span>
-          </button>
-        </footer>
-
-      </div>
-    </section>
-
-  </main>
 
   <!-- ── MODAL: API CONFIGURATION ─────────────────────────────────────── -->
   <div id="settings-overlay" class="modal-backdrop" aria-hidden="true">

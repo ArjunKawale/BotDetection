@@ -1,300 +1,505 @@
-/* renderer.js — runs in the BrowserWindow (renderer process) */
+/* ==========================================================================
+   IntelliTrace Renderer — Production Application Logic
+   Architecture: Modular, robust, event-driven, defensive.
+   ========================================================================== */
 
-// ── STATE ─────────────────────────────────────────────────────────────────────
-
-let settings = { apiUrl: "http://localhost:8000", apiKey: "" };
-let scanning = false;
-let currentView = "ready"; // 'ready', 'scanning', 'results'
-let currentTheme = localStorage.getItem("theme") || "dark";
-
-// ── ELEMENTS ──────────────────────────────────────────────────────────────────
-
-// Theme & Navigation
-const themeToggle = document.getElementById("theme-toggle");
-const htmlEl = document.documentElement;
-
-// Views
-const views = {
-  ready: document.getElementById("view-ready"),
-  scanning: document.getElementById("view-scanning"),
-  results: document.getElementById("view-results")
+// ── 1. Constants ──────────────────────────────────────────────────────────────
+const CONSTANTS = {
+  UI_ANIMATION_DELAY: 150,
+  MAX_TERMINAL_LINES: 500,
+  REGEX_USERNAME: /^[a-zA-Z0-9_-]{3,20}$/,
+  HTTP_TIMEOUT_MS: 30000,
+  SYSTEM_VERSION: "2.4.0"
 };
 
-// Inputs & Buttons
-const usernameInput = document.getElementById("username-input");
-const searchBar = document.getElementById("search-bar");
-const scanBtn = document.getElementById("scan-btn");
-const scanBtnText = document.getElementById("scan-btn-text");
-const scanSpinner = document.getElementById("scan-spinner");
-const scanAnotherBtn = document.getElementById("scan-another");
-const scanBackBtn = document.getElementById("scan-back");
-
-// Scanning View Elements
-const scanningUsername = document.getElementById("scanning-username");
-const terminalCard = document.getElementById("terminal-card");
-const terminalToggle = document.getElementById("terminal-toggle");
-const logPanel = document.getElementById("log-panel");
-
-// Results
-const resultPanel = document.getElementById("result-panel");
-
-// Settings
-const settingsOverlay = document.getElementById("settings-overlay");
-const settingsToggle = document.getElementById("settings-toggle");
-const settingsClose = document.getElementById("settings-close");
-const settingsSave = document.getElementById("settings-save");
-const settingsCancel = document.getElementById("settings-cancel");
-const cfgUrl = document.getElementById("cfg-url");
-const cfgKey = document.getElementById("cfg-key");
-
-// Stepper
-const steps = {
-  scraping: document.querySelector('[data-step="scraping"]'),
-  ideology: document.querySelector('[data-step="ideology"]'),
-  aigen: document.querySelector('[data-step="aigen"]'),
-  frequency: document.querySelector('[data-step="frequency"]'),
-  rhythm: document.querySelector('[data-step="rhythm"]')
+// ── 2. Application State ──────────────────────────────────────────────────────
+const AppState = {
+  settings: { apiUrl: "http://localhost:8000", apiKey: "" },
+  isScanning: false,
+  currentUsername: null,
+  theme: "dark",
+  scrapedData: null,
+  apiResult: null
 };
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
-
-(async () => {
-  // Load settings
-  settings = await electronAPI.loadSettings();
-  cfgUrl.value = settings.apiUrl;
-  cfgKey.value = settings.apiKey;
-
-  // Apply initial theme
-  setTheme(currentTheme);
-})();
-
-// ── THEME MANAGEMENT ──────────────────────────────────────────────────────────
-
-function setTheme(theme) {
-  currentTheme = theme;
-  htmlEl.setAttribute("data-theme", theme);
-  localStorage.setItem("theme", theme);
-}
-
-themeToggle.addEventListener("click", () => {
-  setTheme(currentTheme === "dark" ? "light" : "dark");
-});
-
-// ── VIEW MANAGEMENT ───────────────────────────────────────────────────────────
-
-function showView(viewName) {
-  currentView = viewName;
-  Object.values(views).forEach(el => el.classList.remove("active"));
-  if (views[viewName]) {
-    views[viewName].classList.add("active");
-  }
-}
-
-scanAnotherBtn.addEventListener("click", () => {
-  if (scanning) return;
-  usernameInput.value = "";
-  showView("ready");
-  usernameInput.focus();
-});
-
-scanBackBtn.addEventListener("click", () => {
-  if (scanning) return;
-  showView("ready");
-});
-
-terminalToggle.addEventListener("click", () => {
-  terminalCard.classList.toggle("collapsed");
-});
-
-// ── HELPERS ───────────────────────────────────────────────────────────────────
-
-function updateStepper(stepName, status) {
-  // status: 'active', 'done', 'error', null
-  const stepEl = steps[stepName];
-  if (!stepEl) return;
-
-  stepEl.classList.remove("active", "done", "error");
-  if (status) stepEl.classList.add(status);
-
-  // Update connector line if done
-  if (status === "done") {
-    const nextEl = stepEl.nextElementSibling;
-    if (nextEl && nextEl.classList.contains("step-connector")) {
-      nextEl.classList.add("done");
-    }
-  } else if (!status) {
-    // Reset connector
-    const nextEl = stepEl.nextElementSibling;
-    if (nextEl && nextEl.classList.contains("step-connector")) {
-      nextEl.classList.remove("done");
-    }
-  }
-}
-
-function resetStepper() {
-  Object.keys(steps).forEach(k => updateStepper(k, null));
-}
-
-function log(text, type = "info") {
-  const ts = new Date().toLocaleTimeString("en-GB", { hour12: false });
-  const line = document.createElement("div");
+// ── 3. DOM Cache ──────────────────────────────────────────────────────────────
+const DOM = {
+  htmlEl: document.documentElement,
+  themeToggle: document.getElementById("theme-toggle"),
   
-  // Semantic color mapping for terminal
-  const typeClasses = {
-    info: "log-info",      // Blue
-    ok: "log-success",     // Green
-    warn: "log-warning",   // Yellow
-    err: "log-error"       // Red
-  };
+  views: {
+    ready: document.getElementById("view-ready"),
+    scanning: document.getElementById("view-scanning"),
+    results: document.getElementById("view-results")
+  },
   
-  const mappedClass = typeClasses[type] || "log-info";
-  line.className = `log-line ${mappedClass}`;
-  line.innerHTML = `<span class="log-ts">[${ts}]</span><span class="log-msg">${escHtml(text)}</span>`;
-  logPanel.appendChild(line);
-  logPanel.scrollTop = logPanel.scrollHeight;
-}
-
-function escHtml(s) {
-  return String(s)
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
-
-function setBusy(busy) {
-  scanning = busy;
-  scanBtn.disabled = busy;
-  usernameInput.disabled = busy;
-  scanBackBtn.disabled = busy;
-
-  if (busy) {
-    scanBtnText.classList.add("hidden");
-    scanSpinner.classList.remove("hidden");
-  } else {
-    scanBtnText.classList.remove("hidden");
-    scanSpinner.classList.add("hidden");
-  }
-}
-
-// ── ANIMATED COUNTER ──────────────────────────────────────────────────────────
-
-function animateCount(el, start, end, duration, formatFn = val => Math.round(val)) {
-  let startTimestamp = null;
-  const step = (timestamp) => {
-    if (!startTimestamp) startTimestamp = timestamp;
-    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-
-    // easeOutQuart
-    const easeProgress = 1 - Math.pow(1 - progress, 4);
-    const current = start + easeProgress * (end - start);
-
-    el.textContent = formatFn(current);
-
-    if (progress < 1) {
-      window.requestAnimationFrame(step);
-    } else {
-      el.textContent = formatFn(end);
+  inputs: {
+    searchBar: document.getElementById("search-bar"),
+    username: document.getElementById("username-input"),
+    scanBtn: document.getElementById("scan-btn"),
+    scanBtnText: document.getElementById("scan-btn-text"),
+    scanSpinner: document.getElementById("scan-spinner"),
+    scanAnotherBtn: document.getElementById("scan-another"),
+    scanBackBtn: document.getElementById("scan-back")
+  },
+  
+  settings: {
+    overlay: document.getElementById("settings-overlay"),
+    toggle: document.getElementById("settings-toggle"),
+    close: document.getElementById("settings-close"),
+    save: document.getElementById("settings-save"),
+    cancel: document.getElementById("settings-cancel"),
+    url: document.getElementById("cfg-url"),
+    key: document.getElementById("cfg-key")
+  },
+  
+  scanning: {
+    username: document.getElementById("scanning-username"),
+    terminalCard: document.getElementById("terminal-card"),
+    terminalToggle: document.getElementById("terminal-toggle"),
+    logPanel: document.getElementById("log-panel"),
+    steps: {
+      scraping: document.querySelector('[data-step="scraping"]'),
+      ideology: document.querySelector('[data-step="ideology"]'),
+      aigen: document.querySelector('[data-step="aigen"]'),
+      frequency: document.querySelector('[data-step="frequency"]'),
+      rhythm: document.querySelector('[data-step="rhythm"]')
     }
-  };
-  window.requestAnimationFrame(step);
-}
-
-// ── SETTINGS ─────────────────────────────────────────────────────────────────
-
-function openSettings() { settingsOverlay.classList.add("visible"); }
-function closeSettings() { settingsOverlay.classList.remove("visible"); }
-
-settingsToggle.addEventListener("click", openSettings);
-settingsClose.addEventListener("click", closeSettings);
-settingsCancel.addEventListener("click", closeSettings);
-
-settingsOverlay.addEventListener("click", (e) => {
-  if (e.target === settingsOverlay) closeSettings();
-});
-
-settingsSave.addEventListener("click", async () => {
-  settings.apiUrl = cfgUrl.value.replace(/\/$/, "");
-  settings.apiKey = cfgKey.value;
-  await electronAPI.saveSettings(settings);
-  closeSettings();
-});
-
-// ── SCAN FLOW ─────────────────────────────────────────────────────────────────
-
-scanBtn.addEventListener("click", startScan);
-usernameInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") startScan();
-});
-
-async function startScan() {
-  const raw = usernameInput.value.trim().replace(/^u\//i, "");
-  if (!raw || scanning) return;
-
-  const username = raw;
-  setBusy(true);
-  resetStepper();
-  logPanel.innerHTML = "";
-  resultPanel.innerHTML = "";
-  scanningUsername.textContent = `u/${username}`;
-
-  // Make sure terminal is open when starting
-  terminalCard.classList.remove("collapsed");
-
-  showView("scanning");
-
-  log(`Starting analysis for u/${username}`, "info");
-
-  // ── STAGE 1: run scraper ──────────────────────────────────────────────────
-
-  updateStepper("scraping", "active");
-  log("Launching Web Retrieval Engine…", "warn");
-
-  const scraperOk = await runScraper(username);
-  if (!scraperOk) {
-    setBusy(false);
-    return;
+  },
+  
+  results: {
+    panel: document.getElementById("result-panel"),
+    recentPosts: document.getElementById("recentPosts"),
+    recentComments: document.getElementById("recentComments"),
+    timeline: document.getElementById("timelineContainer"),
+    exportPdf: document.getElementById("download-report-btn"),
+    exportJson: document.getElementById("export-json-btn")
   }
+};
 
-  updateStepper("scraping", "done");
-  log("Data retrieval finished — compiling semantic map…", "ok");
-
-  // ── STAGE 2: read JSON ────────────────────────────────────────────────────
-
-  let payload;
+// ── 4. Initialization ─────────────────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", async () => {
   try {
-    payload = await electronAPI.readJson(username);
-    log(`Successfully compiled payload for ${username}`, "ok");
+    await initializeApp();
   } catch (err) {
-    log(`Failed to compile payload: ${err.message}`, "err");
-    updateStepper("scraping", "error");
-    setBusy(false);
+    console.error("Critical Initialization Failure:", err);
+  }
+});
+
+async function initializeApp() {
+  // Load User Preferences
+  try {
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme) AppState.theme = savedTheme;
+    ThemeManager.applyTheme(AppState.theme);
+
+    const savedSettings = await electronAPI.loadSettings();
+    if (savedSettings) {
+      AppState.settings = savedSettings;
+      DOM.settings.url.value = AppState.settings.apiUrl || "";
+      DOM.settings.key.value = AppState.settings.apiKey || "";
+    }
+  } catch (error) {
+    Terminal.log(`Warning: Failed to load local preferences (${error.message})`, "warn");
+  }
+
+  bindEvents();
+}
+
+function bindEvents() {
+  // Navigation & Toggles
+  DOM.themeToggle?.addEventListener("click", ThemeManager.toggle);
+  DOM.scanning.terminalToggle?.addEventListener("click", () => {
+    DOM.scanning.terminalCard.classList.toggle("collapsed");
+  });
+
+  // Settings Modal
+  DOM.settings.toggle?.addEventListener("click", SettingsManager.open);
+  DOM.settings.close?.addEventListener("click", SettingsManager.close);
+  DOM.settings.cancel?.addEventListener("click", SettingsManager.close);
+  DOM.settings.save?.addEventListener("click", SettingsManager.save);
+  DOM.settings.overlay?.addEventListener("click", (e) => {
+    if (e.target === DOM.settings.overlay) SettingsManager.close();
+  });
+
+  // Scan Execution
+  DOM.inputs.scanBtn?.addEventListener("click", handleScanTrigger);
+  DOM.inputs.username?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") handleScanTrigger();
+  });
+
+  // Reset & Returns
+  DOM.inputs.scanAnotherBtn?.addEventListener("click", handleReset);
+  DOM.inputs.scanBackBtn?.addEventListener("click", handleReset);
+
+  // Clear validation styling on input
+  DOM.inputs.username?.addEventListener("input", () => {
+    if (DOM.inputs.searchBar) DOM.inputs.searchBar.style.borderColor = "";
+  });
+
+  // Export
+  DOM.results.exportPdf?.addEventListener("click", ExportManager.downloadPDF);
+  DOM.results.exportJson?.addEventListener("click", ExportManager.exportJSON);
+}
+
+// ── 5. Shared Utilities ───────────────────────────────────────────────────────
+const Utils = {
+  escHtml(str) {
+    if (!str) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  },
+  
+  getProbColor(prob) {
+    if (prob < 0.35) return "var(--accent-green)";
+    if (prob < 0.60) return "var(--accent-orange)";
+    return "var(--accent-red)";
+  },
+
+  formatTimeAgo(unixSeconds) {
+    if (!unixSeconds) return "Unknown";
+    const diff = Math.floor(Date.now() / 1000 - unixSeconds);
+    if (diff < 60) return `${diff} secs ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)} mins ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+    return `${Math.floor(diff / 86400)} days ago`;
+  },
+
+  animateCounter(element, start, end, durationMs) {
+    let startTimestamp = null;
+    const step = (timestamp) => {
+      if (!startTimestamp) startTimestamp = timestamp;
+      const progress = Math.min((timestamp - startTimestamp) / durationMs, 1);
+      const easeOut = 1 - Math.pow(1 - progress, 4); // Quartic ease out
+      const current = start + easeOut * (end - start);
+      
+      element.textContent = Math.round(current);
+      if (progress < 1) window.requestAnimationFrame(step);
+      else element.textContent = end;
+    };
+    window.requestAnimationFrame(step);
+  }
+};
+
+const FormatUtils = {
+  truncatePost(text) {
+    if (!text) return "";
+    let clean = String(text).replace(/\s+/g, " ").trim();
+    if (clean.length <= 90) return clean;
+    return clean.substring(0, 87).trim() + "…";
+  },
+  
+  truncateComment(text) {
+    if (!text) return "";
+    let clean = String(text).replace(/\s+/g, " ").trim();
+    if (clean.length <= 130) return clean;
+    const start = clean.substring(0, 80).trim();
+    const end = clean.substring(clean.length - 45).trim();
+    return `${start}... ...${end}`;
+  },
+  
+  truncateReasoning(text) {
+    if (!text) return "";
+    const clean = String(text).trim();
+    const sentences = clean.match(/[^.!?]+[.!?]+/g);
+    if (!sentences || sentences.length <= 3) return clean;
+    return sentences.slice(0, 3).join("").trim();
+  },
+
+  truncateDescription(text) {
+    if (!text) return "";
+    let clean = String(text).replace(/\s+/g, " ").trim();
+    if (clean.length <= 150) return clean;
+    return clean.substring(0, 147).trim() + "…";
+  },
+  
+  calculateConfidence(probRaw, explicitConfidence) {
+    if (explicitConfidence !== undefined && explicitConfidence !== null) return Math.round(explicitConfidence * 100);
+    if (probRaw === undefined || probRaw === null) return 0;
+    return Math.round((Math.abs(probRaw - 0.5) * 2) * 100);
+  },
+  
+  formatGapVariance(num) {
+    if (num === undefined || num === null) return null;
+    if (num >= 1e9) return (num / 1e9).toFixed(1) + "B";
+    if (num >= 1e6) return (num / 1e6).toFixed(1) + "M";
+    if (num >= 1e3) return (num / 1e3).toFixed(1) + "K";
+    return num.toLocaleString();
+  },
+  
+  formatNumber(num, suffix = "") {
+    if (num === undefined || num === null) return null;
+    return num.toLocaleString() + (suffix ? ` ${suffix}` : "");
+  },
+  
+  formatHours(num) {
+    if (num === undefined || num === null) return null;
+    return num.toFixed(1) + " hrs";
+  },
+
+  formatDays(num) {
+    if (num === undefined || num === null) return null;
+    return num.toFixed(2);
+  },
+  
+  formatTimestamp(unixSeconds) {
+    if (!unixSeconds) return null;
+    const d = new Date(unixSeconds * 1000);
+    const date = d.toLocaleDateString("en-GB", { day: 'numeric', month: 'short', year: 'numeric' });
+    const time = d.toLocaleTimeString("en-GB", { hour: '2-digit', minute:'2-digit' });
+    return { date, time };
+  },
+
+  generateFrequencyExplanation(probRaw) {
+    return probRaw >= 0.5
+      ? "Posting activity is unusually frequent and may indicate automated behaviour."
+      : "Posting frequency falls within the expected range for a typical human Reddit account.";
+  },
+
+  generateRhythmExplanation(probRaw) {
+    return probRaw >= 0.5
+      ? "Highly periodic posting intervals suggest automated scheduling behaviour."
+      : "Posting intervals vary naturally and resemble organic human behaviour.";
+  },
+
+  extractTopIndicators(indicators) {
+    return (indicators || []).slice(0, 3);
+  }
+};
+
+// ── 6. Theme Management ───────────────────────────────────────────────────────
+const ThemeManager = {
+  applyTheme(theme) {
+    AppState.theme = theme;
+    DOM.htmlEl.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+  },
+  toggle() {
+    ThemeManager.applyTheme(AppState.theme === "dark" ? "light" : "dark");
+  }
+};
+
+// ── 7. Settings Management ────────────────────────────────────────────────────
+const SettingsManager = {
+  open() { 
+    DOM.settings.overlay?.classList.add("visible"); 
+  },
+  close() { 
+    DOM.settings.overlay?.classList.remove("visible"); 
+  },
+  async save() {
+    const newUrl = DOM.settings.url.value.trim().replace(/\/$/, "");
+    const newKey = DOM.settings.key.value.trim();
+    
+    if (!newUrl.startsWith("http")) {
+      Terminal.log("Validation Error: API URL must start with http:// or https://", "warn");
+      return;
+    }
+
+    AppState.settings.apiUrl = newUrl;
+    AppState.settings.apiKey = newKey;
+
+    try {
+      await electronAPI.saveSettings(AppState.settings);
+      Terminal.log("System configuration updated successfully.", "ok");
+      SettingsManager.close();
+    } catch (error) {
+      Terminal.log(`Failed to persist settings: ${error.message}`, "err");
+    }
+  }
+};
+
+// ── 8. View Management ────────────────────────────────────────────────────────
+const ViewManager = {
+  show(viewId) {
+    Object.values(DOM.views).forEach(el => {
+      if (el) el.classList.remove("active");
+    });
+    if (DOM.views[viewId]) {
+      DOM.views[viewId].classList.add("active");
+    }
+  },
+  
+  setBusyState(isBusy) {
+    AppState.isScanning = isBusy;
+    if (DOM.inputs.scanBtn) DOM.inputs.scanBtn.disabled = isBusy;
+    if (DOM.inputs.username) DOM.inputs.username.disabled = isBusy;
+    if (DOM.inputs.scanBackBtn) DOM.inputs.scanBackBtn.disabled = isBusy;
+
+    if (isBusy) {
+      DOM.inputs.scanBtnText?.classList.add("hidden");
+      DOM.inputs.scanSpinner?.classList.remove("hidden");
+    } else {
+      DOM.inputs.scanBtnText?.classList.remove("hidden");
+      DOM.inputs.scanSpinner?.classList.add("hidden");
+    }
+  }
+};
+
+function handleReset() {
+  if (AppState.isScanning) return;
+  DOM.inputs.username.value = "";
+  DOM.inputs.searchBar.style.borderColor = "";
+  ViewManager.show("ready");
+  setTimeout(() => DOM.inputs.username.focus(), 100);
+}
+
+// ── 9. Validation & Execution Trigger ─────────────────────────────────────────
+function handleScanTrigger() {
+  if (AppState.isScanning) return;
+
+  const rawInput = DOM.inputs.username.value.trim().replace(/^u\//i, "");
+  
+  if (!rawInput) {
+    showInputError("Target Reddit username is required.");
+    return;
+  }
+  
+  if (!CONSTANTS.REGEX_USERNAME.test(rawInput)) {
+    showInputError("Invalid formatting. Must be 3-20 alphanumeric characters.");
+    return;
+  }
+  
+  DOM.inputs.searchBar.style.borderColor = "";
+  AppState.currentUsername = rawInput;
+  executeWorkflow(rawInput);
+}
+
+function showInputError(msg) {
+  if (DOM.inputs.searchBar) DOM.inputs.searchBar.style.borderColor = "var(--accent-red)";
+  Terminal.log(`Pre-flight Validation Failed: ${msg}`, "warn");
+}
+
+// ── 10. Pipeline Tracker ──────────────────────────────────────────────────────
+const Pipeline = {
+  reset() {
+    Object.values(DOM.scanning.steps).forEach(stepEl => {
+      if (!stepEl) return;
+      stepEl.classList.remove("active", "done", "error");
+      
+      const connector = stepEl.nextElementSibling;
+      if (connector && connector.classList.contains("step-connector")) {
+        connector.classList.remove("done");
+      }
+    });
+  },
+  
+  update(stepKey, status) {
+    const stepEl = DOM.scanning.steps[stepKey];
+    if (!stepEl) return;
+
+    stepEl.classList.remove("active", "done", "error");
+    if (status) stepEl.classList.add(status);
+
+    const connector = stepEl.nextElementSibling;
+    if (connector && connector.classList.contains("step-connector")) {
+      if (status === "done") connector.classList.add("done");
+      else connector.classList.remove("done");
+    }
+  }
+};
+
+// ── 11. Terminal System ───────────────────────────────────────────────────────
+const Terminal = {
+  clear() {
+    if (DOM.scanning.logPanel) DOM.scanning.logPanel.innerHTML = "";
+  },
+  
+  log(message, type = "info") {
+    if (!DOM.scanning.logPanel) return;
+
+    const ts = new Date().toLocaleTimeString("en-GB", { hour12: false });
+    const line = document.createElement("div");
+    line.className = `log-line log-${type}`;
+    
+    line.innerHTML = `<span class="log-ts">[${ts}]</span> <span class="log-msg">${Utils.escHtml(message)}</span>`;
+    DOM.scanning.logPanel.appendChild(line);
+    
+    // Auto-prune to prevent memory leaks
+    if (DOM.scanning.logPanel.childNodes.length > CONSTANTS.MAX_TERMINAL_LINES) {
+      DOM.scanning.logPanel.removeChild(DOM.scanning.logPanel.firstChild);
+    }
+    
+    // Auto-scroll
+    DOM.scanning.logPanel.scrollTop = DOM.scanning.logPanel.scrollHeight;
+  }
+};
+
+// ── 12. Main Analysis Workflow ────────────────────────────────────────────────
+async function executeWorkflow(username) {
+  ViewManager.setBusyState(true);
+  Pipeline.reset();
+  Terminal.clear();
+  
+  if (DOM.results.panel) DOM.results.panel.innerHTML = "";
+  if (DOM.scanning.username) DOM.scanning.username.textContent = `u/${username}`;
+  DOM.scanning.terminalCard?.classList.remove("collapsed");
+  
+  ViewManager.show("scanning");
+  Terminal.log(`Initializing forensic telemetry for u/${username}...`, "info");
+
+  // Phase 1: Subprocess Scraping via IPC
+  Pipeline.update("scraping", "active");
+  const scrapeSuccess = await handleScrapingSubprocess(username);
+  
+  if (!scrapeSuccess) {
+    ViewManager.setBusyState(false);
+    return; // Terminal already logged the error
+  }
+  Pipeline.update("scraping", "done");
+
+  // Phase 2: Feature Extraction (Local JSON Retrieval)
+  Terminal.log("Extracting local features from user payload...", "info");
+  try {
+    AppState.scrapedData = await electronAPI.readJson(username);
+    Terminal.log("Extraction verified. JSON parsed successfully.", "ok");
+  } catch (error) {
+    Terminal.log(`Feature Extraction Error: ${error.message}`, "err");
+    Pipeline.update("scraping", "error"); 
+    ViewManager.setBusyState(false);
     return;
   }
 
-  // ── STAGE 3–6: stream from FastAPI ───────────────────────────────────────
-
-  log("Establishing connection to Analysis API endpoint…", "info");
-  await streamFromApi(username, payload);
-
-  setBusy(false);
+  // Phase 3: Remote ML Pipeline (SSE Streaming)
+  Terminal.log(`Establishing secure connection to Analysis API (${AppState.settings.apiUrl})...`, "info");
+  await streamAnalysisAPI(username, AppState.scrapedData);
+  
+  ViewManager.setBusyState(false);
 }
 
-// ── SCRAPER RUNNER ────────────────────────────────────────────────────────────
-
-function runScraper(username) {
+// ── 13. IPC Interfacing ───────────────────────────────────────────────────────
+function handleScrapingSubprocess(username) {
   return new Promise((resolve) => {
-    const cleanup = electronAPI.onScraperEvent((ev) => {
-      if (ev.event === "stdout") {
-        log(ev.data.trim(), "info");
-      } else if (ev.event === "stderr") {
-        log(ev.data.trim(), "warn");
-      } else if (ev.event === "done") {
-        cleanup();
-        resolve(true);
-      } else if (ev.event === "error") {
-        log(`Retrieval error: ${ev.data}`, "err");
-        updateStepper("scraping", "error");
-        cleanup();
-        resolve(false);
+    const removeListener = electronAPI.onScraperEvent((ev) => {
+      switch (ev.event) {
+        case "stdout":
+          Terminal.log(`[Scraper] ${ev.data.trim()}`, "info");
+          break;
+        case "stderr":
+          Terminal.log(`[Scraper Warn] ${ev.data.trim()}`, "warn");
+          break;
+        case "error":
+          Terminal.log(`[Process Error] ${ev.data}`, "err");
+          Pipeline.update("scraping", "error");
+          removeListener();
+          resolve(false);
+          break;
+        case "done":
+          if (ev.data === 0) {
+            Terminal.log(`Subprocess executed successfully (Exit 0).`, "ok");
+            removeListener();
+            resolve(true);
+          } else {
+            Terminal.log(`Subprocess failed (Exit Code: ${ev.data}).`, "err");
+            Pipeline.update("scraping", "error");
+            removeListener();
+            resolve(false);
+          }
+          break;
       }
     });
 
@@ -302,350 +507,529 @@ function runScraper(username) {
   });
 }
 
-// ── SSE STREAM ────────────────────────────────────────────────────────────────
+async function streamAnalysisAPI(username, payload) {
+  const endpoint = `${AppState.settings.apiUrl}/api/v1/process-user`;
 
-async function streamFromApi(username, payload) {
-  const url = `${settings.apiUrl}/api/v1/process-user`;
-
-  let response;
   try {
-    response = await fetch(url, {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), CONSTANTS.HTTP_TIMEOUT_MS);
+
+    const response = await fetch(endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-API-Key": settings.apiKey,
+        "X-API-Key": AppState.settings.apiKey
       },
       body: JSON.stringify(payload),
+      signal: controller.signal
     });
-  } catch (err) {
-    log(`Network stream error: ${err.message}`, "err");
-    updateStepper("ideology", "error");
-    return;
-  }
+    
+    clearTimeout(timeoutId);
 
-  if (!response.ok) {
-    const txt = await response.text().catch(() => "");
-    log(`API exception ${response.status}: ${txt}`, "err");
-    updateStepper("ideology", "error");
-    return;
-  }
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-
-  // Map SSE step names → stage keys
-  const stepStageMap = {
-    ideology: "ideology",
-    aigen: "aigen",
-    frequency: "frequency",
-    rhythm: "rhythm",
-    done: "done",
-    error: "error",
-  };
-
-  // Track previous step as "done"
-  let prevStep = null;
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop(); // keep incomplete line
-
-    for (const line of lines) {
-      if (!line.startsWith("data: ")) continue;
-      let event;
-      try { event = JSON.parse(line.slice(6)); } catch { continue; }
-
-      const step = event.step;
-
-      // Mark prev step done
-      if (prevStep && prevStep !== step) {
-        if (prevStep !== "done" && prevStep !== "error") {
-          updateStepper(stepStageMap[prevStep] ?? prevStep, "done");
-        }
-      }
-
-      if (step === "done") {
-        log("Multimodal Analysis complete!", "ok");
-        // Pass the entire event result so metrics can be found anywhere
-        renderResult(event.result);
-        setTimeout(() => showView("results"), 800);
-        return;
-      }
-
-      if (step === "error") {
-        log(`Fatal Error: ${event.message}`, "err");
-        if (prevStep && prevStep !== "done" && prevStep !== "error") {
-          updateStepper(stepStageMap[prevStep] ?? prevStep, "error");
-        }
-        return;
-      }
-
-      // Activate current stage
-      const stageKey = stepStageMap[step] ?? step;
-      if (steps[stageKey]) {
-        updateStepper(stageKey, "active");
-      }
-      log(event.message, "info");
-      prevStep = step;
+    if (!response.ok) {
+      const errText = await response.text().catch(() => "Unknown HTTP exception.");
+      throw new Error(`HTTP ${response.status} - ${errText}`);
     }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let buffer = "";
+    
+    // Map backend SSE step IDs to frontend Pipeline DOM keys
+    const stageMap = {
+      ideology: "ideology",
+      aigen: "aigen",
+      frequency: "frequency",
+      rhythm: "rhythm",
+      ensemble: "done"
+    };
+
+    let previousStep = null;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const chunks = buffer.split("\n");
+      buffer = chunks.pop(); // Keep incomplete chunk in buffer
+
+      for (const line of chunks) {
+        if (!line.startsWith("data: ")) continue;
+        
+        let eventPayload;
+        try {
+          eventPayload = JSON.parse(line.slice(6).trim());
+        } catch {
+          continue; // Malformed JSON chunk, skip gracefully
+        }
+
+        const currentStep = eventPayload.step;
+
+        // Automatically complete the previous step visually
+        if (previousStep && previousStep !== currentStep && previousStep !== "error") {
+          const mappedPrev = stageMap[previousStep] || previousStep;
+          Pipeline.update(mappedPrev, "done");
+        }
+
+        if (currentStep === "error") {
+          Terminal.log(`Pipeline Aborted: ${eventPayload.message || "Unknown API error"}`, "err");
+          const mappedFail = stageMap[previousStep] || "ideology"; 
+          Pipeline.update(mappedFail, "error");
+          return;
+        }
+
+        if (currentStep === "done" || currentStep === "ensemble") {
+          Terminal.log("Ensemble consensus reached. Analysis complete.", "ok");
+          AppState.apiResult = eventPayload.result || {};
+          renderDashboard(AppState.apiResult, AppState.scrapedData);
+          setTimeout(() => ViewManager.show("results"), 400); // Visual buffer
+          return;
+        }
+
+        // Advance visual stepper
+        const mappedCurrent = stageMap[currentStep] || currentStep;
+        Pipeline.update(mappedCurrent, "active");
+        Terminal.log(eventPayload.message || `Processing module: ${currentStep}...`, "info");
+        
+        previousStep = currentStep;
+      }
+    }
+  } catch (error) {
+    Terminal.log(`Network/Stream Failure: ${error.message}`, "err");
+    Pipeline.update("ideology", "error"); // Fallback fail state
   }
 }
 
-// ── EVIDENCE FIELD MAPS (Behavioral Analysis) ─────────────────────────────────
-// Strict mapping: Only fields found in the processed JSON will render.
+// ── 14. Dashboard Rendering ───────────────────────────────────────────────────
+function renderDashboard(apiData, scrapedData) {
+  if (!DOM.results.panel) return;
+  DOM.results.panel.innerHTML = "";
 
-const FREQUENCY_METRICS = [
-  { label: "Total Posts Analyzed", keys: ["total_posts_analyzed", "total_posts", "posts_analyzed", "post_count"] },
-  { label: "Activity Density Score", keys: ["activity_density", "density", "frequency_data"] },
-  { label: "Average Posting Interval", keys: ["avg_posting_interval", "average_posting_interval", "avg_interval_hours", "posting_interval_avg"], format: (v) => `${Number(v).toFixed(2)} hrs` },
-  { label: "Avg Posts / Day", keys: ["avg_posts_per_day", "average_posts_per_day", "posts_per_day"] },
-];
+  // 1. Verdict Banner
+  DOM.results.panel.appendChild(createVerdictBanner(apiData));
 
-const RHYTHM_METRICS = [
-  { label: "Median Gap", keys: ["median_gap_seconds", "median_gap", "median_gap_hours"], format: (v) => v > 1000 ? `${(v/3600).toFixed(1)} hrs` : `${v}` },
-  { label: "Gap Variance", keys: ["gap_variance"], format: (v) => v > 1000000 ? Number(v).toExponential(2) : Number(v).toFixed(2) },
-  { label: "Hour Variance", keys: ["hour_variance", "hourly_variance"], format: (v) => Number(v).toFixed(2) },
-  { label: "Top-of-Hour Ratio", keys: ["top_of_hour_ratio", "top_of_hour_pct"], format: (v) => `${Math.round(v * 100)}%` },
-  { label: "Sleep Gap", keys: ["avg_sleep_hours", "sleep_gap", "sleep_gap_hours"], format: (v) => `${Number(v).toFixed(1)} hrs` },
-  { label: "Rhythm Consistency", keys: ["rhythm_consistency", "consistency_score"], format: (v) => `${Math.round(v * 100)}%` },
-];
+  // 2. Grid Container & Cards
+  const gridContainer = document.createElement("div");
+  gridContainer.className = "analysis-grid";
+  
+  gridContainer.appendChild(createSemanticCard(apiData));
+  gridContainer.appendChild(createAITextCard(apiData));
+  gridContainer.appendChild(createFrequencyCard(apiData, scrapedData));
+  gridContainer.appendChild(createRhythmCard(apiData, scrapedData));
+  
+  DOM.results.panel.appendChild(gridContainer);
 
-// ── RENDER-SIDE ASSESSMENT RULES (Behavioral Analysis) ────────────────────────
-const ASSESSMENT_TEXT = {
-  frequency: {
-    low: "Posting cadence appears consistent with typical human activity patterns.",
-    medium: "Activity density displays moderate regularity requiring contextual review.",
-    high: "Posting frequency exhibits highly automated or synthetic variance characteristics.",
-  },
-  rhythm: {
-    low: "Temporal activity rhythm aligns tightly with expected organic behavior.",
-    medium: "Behavioral rhythm lacks established circadian structure, displaying moderate anomalies.",
-    high: "Activity distribution and circadian variance strongly indicate synthetic scheduling.",
-  },
-};
+  // 3. Activity Timeline
+  renderActivityData(scrapedData);
 
-function probabilityTier(p) {
-  if (p < 0.35) return "low";
-  if (p < 0.6) return "medium";
-  return "high";
+  // 4. Trigger DOM Animations slightly after injection
+  setTimeout(() => {
+    document.querySelectorAll('.animate-bar').forEach(bar => {
+      bar.style.width = bar.getAttribute('data-width') + '%';
+    });
+    document.querySelectorAll('.animate-pct').forEach(pct => {
+      const target = parseInt(pct.getAttribute('data-val'), 10) || 0;
+      Utils.animateCounter(pct, 0, target, 1200);
+    });
+  }, 50);
 }
 
-// Recursively search for the key across the provided result object to ensure resilience.
-function getMetricValue(data, keys, fullResult) {
-  for (const key of keys) {
-    if (data && data[key] !== undefined && data[key] !== null && data[key] !== "") return data[key];
-    if (fullResult && fullResult[key] !== undefined && fullResult[key] !== null && fullResult[key] !== "") return fullResult[key];
-    if (fullResult && fullResult.rhythm_features && fullResult.rhythm_features[key] !== undefined && fullResult.rhythm_features[key] !== null) return fullResult.rhythm_features[key];
-  }
-  return undefined;
-}
+function createVerdictBanner(data) {
+  const probRaw = data?.overall_probability ?? 0;
+  const probPct = Math.round(probRaw * 100);
+  const isBot = probRaw >= 0.5;
+  const themeClass = isBot ? "bot" : "human";
+  const labelText = isBot ? "LIKELY BOT" : "LIKELY HUMAN";
+  const iconText = isBot ? "🤖" : "👤";
+  
+  const riskLevel = probRaw > 0.75 ? "HIGH" : (probRaw > 0.4 ? "MEDIUM" : "LOW");
+  const reportId = `ITR-${Date.now().toString().slice(-6)}-${Math.floor(Math.random()*1000)}`;
+  const timestamp = new Date().toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
 
-function formatMetricValue(raw, metric) {
-  if (metric.format) return metric.format(raw);
-  if (typeof raw === "number") {
-    if (metric.isRatio && raw <= 1) return `${Math.round(raw * 100)}%`;
-    const rounded = Math.round(raw * 100) / 100;
-    return metric.unit ? `${rounded} ${metric.unit}` : `${rounded}`;
-  }
-  return String(raw);
-}
-
-function renderEvidence(data, metricList, fullResult) {
-  const rows = metricList
-    .map(m => {
-      const raw = getMetricValue(data, m.keys, fullResult);
-      if (raw === undefined) return null;
-      return { label: m.label, value: formatMetricValue(raw, m) };
-    })
-    .filter(Boolean);
-
-  if (rows.length === 0) return "";
-
-  return `
-    <div class="evidence-block">
-      <div class="evidence-label">Key Indicators</div>
-      <div class="evidence-list">
-        ${rows.map(r => `
-          <div class="evidence-row">
-            <span class="evidence-key">• ${escHtml(r.label)}</span>
-            <span class="evidence-val">${escHtml(r.value)}</span>
-          </div>
-        `).join("")}
-      </div>
-    </div>
-  `;
-}
-
-function renderIndicators(arr) {
-  if (!Array.isArray(arr) || arr.length === 0) return "";
-  return `<div class="indicators">${arr.map(s => `<span class="indicator-tag">${escHtml(s)}</span>`).join("")}</div>`;
-}
-
-function renderEngineTag(label) {
-  return `<div class="engine-tag">${escHtml(label)}</div>`;
-}
-
-function probColor(v) {
-  if (v < 0.35) return "var(--status-human)";
-  if (v < 0.6) return "var(--status-warning)";
-  return "var(--status-bot)";
-}
-
-function getVerdictExplanation(prob) {
-  if (prob < 0.35) return "The combined semantic and behavioral analyses indicate a very low probability of automated activity.";
-  if (prob < 0.6) return "The combined semantic and behavioral analyses indicate mixed telemetry, suggesting potential hybrid operational patterns.";
-  return "The combined semantic and behavioral analyses indicate a high probability of automated activity with strong synthetic markers.";
-}
-
-// ── CARD BODY BUILDERS ────────────────────────────────────────────────────────
-
-// Semantic Engine Cards
-function semanticCardBody(d, assessmentField) {
-  const assessment = d[assessmentField] ?? d.pattern_description ?? d.reasoning ?? "";
-  return `
-    <div class="assessment-block">
-      <div class="assessment-label">Analysis Summary</div>
-      ${assessment ? `<div class="assessment-text">${escHtml(assessment)}</div>` : ""}
-    </div>
-    ${renderIndicators(d.key_indicators)}
-    ${renderEngineTag("Semantic Analysis Engine")}
-  `;
-}
-
-// Behavioral Engine Cards
-function behavioralCardBody(d, prob, kind, metricList, fullResult) {
-  const tier = probabilityTier(prob);
-  const assessment = ASSESSMENT_TEXT[kind][tier];
-  return `
-    <div class="assessment-block">
-      <div class="assessment-label">Assessment</div>
-      <div class="assessment-text">${escHtml(assessment)}</div>
-    </div>
-    ${renderEvidence(d, metricList, fullResult)}
-    ${renderEngineTag("Behavioral Analysis Engine")}
-  `;
-}
-
-// ── RESULT RENDERER ───────────────────────────────────────────────────────────
-
-function renderResult(result) {
-  resultPanel.innerHTML = "";
-
-  const prob = result.overall_probability ?? 0;
-  const isBot = result.is_bot_overall;
-  const fa = result.full_analysis ?? {};
-  const verdictExplanation = getVerdictExplanation(prob);
-
-  // Verdict banner
   const banner = document.createElement("div");
-  banner.className = `verdict ${isBot ? "bot" : "human"} fade-in`;
+  banner.className = `verdict ${themeClass} fade-in`;
+  
   banner.innerHTML = `
     <div class="verdict-left">
-      <div class="verdict-icon">${isBot ? "🤖" : "👤"}</div>
+      <div class="verdict-icon">${iconText}</div>
       <div class="verdict-info">
-        <div class="verdict-username">u/${escHtml(result.username)}</div>
-        <div class="verdict-label">LIKELY ${isBot ? "BOT" : "HUMAN"}</div>
-        <div class="verdict-sub">Overall Verdict</div>
-        <div class="verdict-desc">${escHtml(verdictExplanation)}</div>
+        <div class="verdict-username">u/${Utils.escHtml(AppState.currentUsername)}</div>
+        <div class="verdict-label">${labelText}</div>
+        <div class="verdict-sub">Overall Consensus Verdict</div>
+        
+        <div class="verdict-desc" style="display: flex; gap: var(--space-24); margin-top: var(--space-8);">
+          <div><strong>Risk Level:</strong> <span style="color: var(${isBot ? '--accent-red' : '--accent-green'})">${riskLevel}</span></div>
+          <div><strong>Time:</strong> ${timestamp}</div>
+          <div><strong>Report ID:</strong> ${reportId}</div>
+        </div>
       </div>
     </div>
+    
     <div class="verdict-right">
-      <div class="verdict-pct" style="color: ${probColor(prob)}"><span id="overall-pct">0</span>%</div>
+      <div class="verdict-sub">OVERALL PROBABILITY</div>
+      <div class="verdict-pct" style="color: ${Utils.getProbColor(probRaw)}">
+        <span class="animate-pct" data-val="${probPct}">0</span>%
+      </div>
       <div class="prob-bar-track">
-        <div class="prob-bar-fill" id="overall-bar" style="width:0%; background: ${probColor(prob)}"></div>
+        <div class="prob-bar-fill animate-bar" style="width: 0%; background: ${Utils.getProbColor(probRaw)};" data-width="${probPct}"></div>
       </div>
     </div>
   `;
-  resultPanel.appendChild(banner);
-
-  // Analysis cards grid
-  const grid = document.createElement("div");
-  grid.className = "analysis-grid";
-
-  const cards = [
-    {
-      title: "Semantic Coherence",
-      icon: "🧠",
-      data: fa.ideology || result.ideology,
-      probKey: "bot_probability",
-      type: "semantic",
-      extra: (d) => semanticCardBody(d, "pattern_description"),
-    },
-    {
-      title: "Text Authenticity",
-      icon: "⚡",
-      data: fa.ai_authenticity || result.ai_authenticity,
-      probKey: "ai_probability",
-      type: "semantic",
-      extra: (d) => semanticCardBody(d, "reasoning"),
-    },
-    {
-      title: "Posting Cadence",
-      icon: "📊",
-      data: fa.frequency || result.frequency,
-      probKey: "bot_probability",
-      type: "behavioral",
-      extra: (d, p, fullRes) => behavioralCardBody(d, p, "frequency", FREQUENCY_METRICS, fullRes),
-    },
-    {
-      title: "Behavioral Rhythm",
-      icon: "⏱️",
-      data: fa.rhythm || result.rhythm,
-      probKey: "bot_probability",
-      type: "behavioral",
-      extra: (d, p, fullRes) => behavioralCardBody(d, p, "rhythm", RHYTHM_METRICS, fullRes),
-    },
-  ];
-
-  cards.forEach(({ title, icon, data, probKey, type, extra }, i) => {
-    // Graceful fallback structure for dynamic payloads
-    const cardData = data || {}; 
-    const p = cardData[probKey] ?? (i > 1 ? result.frequency_data ?? 0 : 0);
-    const botish = p >= 0.5;
-
-    const card = document.createElement("div");
-    card.className = `analysis-card card-${type} fade-in`;
-    card.style.animationDelay = `${0.1 + i * 0.08}s`;
-
-    card.innerHTML = `
-      <div class="card-header">
-        <div class="card-title-row">
-          <span class="card-icon">${icon}</span>
-          <span class="card-title">${title}</span>
-        </div>
-        <div class="card-badge ${botish ? "bot" : "human"}">${botish ? "BOT" : "HUMAN"}</div>
-      </div>
-      <div class="card-prob" style="color: ${probColor(p)}"><span class="card-pct-val" data-val="${p}">0</span>%</div>
-      <div class="prob-bar-track">
-        <div class="prob-bar-fill card-bar-${i}" style="width:0%; background: ${probColor(p)}"></div>
-      </div>
-      ${extra(cardData, p, result)}
-    `;
-    grid.appendChild(card);
-  });
-
-  resultPanel.appendChild(grid);
-
-  // Animations - Execute smoothly when DOM is painted
-  setTimeout(() => {
-    const overBar = document.getElementById("overall-bar");
-    if (overBar) overBar.style.width = `${prob * 100}%`;
-
-    const overPct = document.getElementById("overall-pct");
-    if (overPct) animateCount(overPct, 0, prob * 100, 1200);
-
-    const allPctVals = resultPanel.querySelectorAll('.card-pct-val');
-    allPctVals.forEach((el, index) => {
-      const targetVal = parseFloat(el.getAttribute('data-val')) * 100;
-      animateCount(el, 0, targetVal, 1000 + (index * 150));
-      
-      const bar = document.querySelector(`.card-bar-${index}`);
-      if (bar) bar.style.width = `${targetVal}%`;
-    });
-  }, 900);
+  return banner;
 }
+
+function createSemanticCard(data) {
+  const src = data?.full_analysis?.ideology || data?.ideology || {};
+  const prob = src.bot_probability ?? 0;
+  const isBot = prob >= 0.5;
+  const probPct = Math.round(prob * 100);
+  const confPct = FormatUtils.calculateConfidence(prob, src.confidence);
+
+  const classification = src.content_classification;
+  const botType = src.bot_type;
+  const patternDetected = src.pattern_detected || src.pattern_type;
+  const patternDesc = FormatUtils.truncateDescription(src.pattern_description);
+  const indicators = FormatUtils.extractTopIndicators(src.key_indicators);
+
+  const card = document.createElement("div");
+  card.className = "analysis-card fade-in";
+  card.style.animationDelay = "0.1s";
+  
+  let evidenceHTML = '';
+  if (classification || patternDetected || botType) {
+    evidenceHTML += `<div class="evidence-block">`;
+    if (classification) {
+      evidenceHTML += `<div class="evidence-row"><span class="evidence-key">Classification</span><span class="evidence-val">${Utils.escHtml(classification)}</span></div>`;
+    }
+    if (patternDetected) {
+      evidenceHTML += `<div class="evidence-row"><span class="evidence-key">Pattern Detected</span><span class="evidence-val">${Utils.escHtml(patternDetected)}</span></div>`;
+    }
+    if (botType) {
+      evidenceHTML += `<div class="evidence-row"><span class="evidence-key">Bot Type</span><span class="evidence-val">${Utils.escHtml(botType)}</span></div>`;
+    }
+    evidenceHTML += `</div>`;
+  }
+
+  let assessmentHTML = '';
+  if (patternDesc) {
+    assessmentHTML += `
+    <div class="assessment-block">
+      <div class="assessment-label">Pattern Description</div>
+      <div class="assessment-text">${Utils.escHtml(patternDesc)}</div>
+    </div>`;
+  }
+
+  let indicatorsHTML = '';
+  if (indicators.length > 0) {
+    indicatorsHTML = `
+    <div class="assessment-block">
+      <div class="assessment-label">Key Indicators</div>
+      <ul style="margin-left: var(--space-16); list-style: disc;">
+        ${indicators.map(ind => `<li class="assessment-text">${Utils.escHtml(ind)}</li>`).join("")}
+      </ul>
+    </div>`;
+  }
+
+  card.innerHTML = `
+    <div class="card-header">
+      <div class="card-title-row">
+        <span class="card-icon">🧠</span>
+        <span class="card-title">1. Semantic Analysis</span>
+      </div>
+      <div class="card-badge ${isBot ? 'bot' : 'human'}">${isBot ? 'Likely Bot' : 'Likely Human'}</div>
+    </div>
+    <div class="card-prob" style="color: ${Utils.getProbColor(prob)}; display: flex; align-items: baseline; gap: var(--space-8);">
+      <div><span class="animate-pct" data-val="${probPct}">0</span>%</div>
+      <div style="font-size: var(--text-meta); color: var(--text-secondary); font-weight: 500; font-family: var(--font-sans);">Conf: ${confPct}%</div>
+    </div>
+    <div class="prob-bar-track">
+      <div class="prob-bar-fill animate-bar" style="width: 0%; background: ${Utils.getProbColor(prob)};" data-width="${probPct}"></div>
+    </div>
+    ${evidenceHTML}
+    ${assessmentHTML}
+    ${indicatorsHTML}
+  `;
+  return card;
+}
+
+function createAITextCard(data) {
+  const src = data?.full_analysis?.ai_authenticity || data?.ai_authenticity || {};
+  const prob = src.ai_probability ?? 0;
+  const isBot = prob >= 0.5;
+  const probPct = Math.round(prob * 100);
+  const confPct = FormatUtils.calculateConfidence(prob, src.confidence);
+
+  const verdict = src.verdict;
+  const reasoning = FormatUtils.truncateReasoning(src.reasoning);
+
+  const card = document.createElement("div");
+  card.className = "analysis-card fade-in";
+  card.style.animationDelay = "0.2s";
+  
+  let assessmentHTML = '';
+  if (verdict) {
+    assessmentHTML += `
+    <div class="assessment-block">
+      <div class="assessment-label">Engine Verdict</div>
+      <div class="assessment-text">${Utils.escHtml(verdict)}</div>
+    </div>`;
+  }
+  if (reasoning) {
+    assessmentHTML += `
+    <div class="assessment-block">
+      <div class="assessment-label">Heuristic Reasoning</div>
+      <div class="assessment-text">${Utils.escHtml(reasoning)}</div>
+    </div>`;
+  }
+
+  card.innerHTML = `
+    <div class="card-header">
+      <div class="card-title-row">
+        <span class="card-icon">⚡</span>
+        <span class="card-title">2. AI Text Authenticity</span>
+      </div>
+      <div class="card-badge ${isBot ? 'bot' : 'human'}">${isBot ? 'Likely AI' : 'Human Text'}</div>
+    </div>
+    <div class="card-prob" style="color: ${Utils.getProbColor(prob)}; display: flex; align-items: baseline; gap: var(--space-8);">
+      <div><span class="animate-pct" data-val="${probPct}">0</span>%</div>
+      <div style="font-size: var(--text-meta); color: var(--text-secondary); font-weight: 500; font-family: var(--font-sans);">Conf: ${confPct}%</div>
+    </div>
+    <div class="prob-bar-track">
+      <div class="prob-bar-fill animate-bar" style="width: 0%; background: ${Utils.getProbColor(prob)};" data-width="${probPct}"></div>
+    </div>
+    ${assessmentHTML}
+  `;
+  return card;
+}
+
+function createFrequencyCard(apiData, scrapedData) {
+  const srcAPI = apiData?.full_analysis?.frequency || apiData?.frequency || {};
+  const prob = srcAPI.bot_probability ?? apiData?.frequency_data ?? 0;
+  const isBot = prob >= 0.5;
+  const probPct = Math.round(prob * 100);
+  const confPct = FormatUtils.calculateConfidence(prob, srcAPI.confidence);
+  
+  const rf = scrapedData?.rhythm_features_7_day_basis || scrapedData?.rhythm_features || {};
+  const localFreq = rf.posting_frequency_days ?? scrapedData?.frequency_data;
+  const formattedFreq = FormatUtils.formatDays(localFreq);
+  const localPosts = rf.total_posts;
+  
+  const explanationDesc = FormatUtils.generateFrequencyExplanation(prob);
+
+  const card = document.createElement("div");
+  card.className = "analysis-card fade-in";
+  card.style.animationDelay = "0.3s";
+  
+  let evidenceHTML = '';
+  if (formattedFreq !== null || localPosts !== undefined) {
+     evidenceHTML += `<div class="evidence-block">`;
+     if (formattedFreq !== null) {
+         evidenceHTML += `<div class="evidence-row"><span class="evidence-key">Frequency (Days)</span><span class="evidence-val">${formattedFreq}</span></div>`;
+     }
+     if (localPosts !== undefined && localPosts !== null) {
+         evidenceHTML += `<div class="evidence-row"><span class="evidence-key">Posts Analysed</span><span class="evidence-val">${localPosts}</span></div>`;
+     }
+     evidenceHTML += `</div>`;
+  }
+
+  card.innerHTML = `
+    <div class="card-header">
+      <div class="card-title-row">
+        <span class="card-icon">📊</span>
+        <span class="card-title">3. Posting Frequency</span>
+      </div>
+      <div class="card-badge ${isBot ? 'bot' : 'human'}">${isBot ? 'Anomalous' : 'Organic'}</div>
+    </div>
+    <div class="card-prob" style="color: ${Utils.getProbColor(prob)}; display: flex; align-items: baseline; gap: var(--space-8);">
+      <div><span class="animate-pct" data-val="${probPct}">0</span>%</div>
+      <div style="font-size: var(--text-meta); color: var(--text-secondary); font-weight: 500; font-family: var(--font-sans);">Conf: ${confPct}%</div>
+    </div>
+    <div class="prob-bar-track">
+      <div class="prob-bar-fill animate-bar" style="width: 0%; background: ${Utils.getProbColor(prob)};" data-width="${probPct}"></div>
+    </div>
+    ${evidenceHTML}
+    <div class="assessment-block">
+       <div class="assessment-label">Activity Pattern</div>
+       <div class="assessment-text">${explanationDesc}</div>
+    </div>
+  `;
+  return card;
+}
+
+function createRhythmCard(apiData, scrapedData) {
+  const srcAPI = apiData?.full_analysis?.rhythm || apiData?.rhythm || {};
+  const prob = srcAPI.bot_probability ?? 0;
+  const isBot = prob >= 0.5;
+  const probPct = Math.round(prob * 100);
+  const confPct = FormatUtils.calculateConfidence(prob, srcAPI.confidence);
+  
+  const rf = scrapedData?.rhythm_features_7_day_basis || scrapedData?.rhythm_features || {};
+  const medGap = FormatUtils.formatNumber(rf.median_gap_seconds, "sec");
+  const gapVar = FormatUtils.formatGapVariance(rf.gap_variance);
+  const topRatio = rf.top_of_hour_ratio !== undefined && rf.top_of_hour_ratio !== null ? (rf.top_of_hour_ratio * 100).toFixed(1) + "%" : null;
+  const sleepHr = FormatUtils.formatHours(rf.avg_sleep_hours);
+
+  const cadenceDesc = FormatUtils.generateRhythmExplanation(prob);
+
+  const card = document.createElement("div");
+  card.className = "analysis-card fade-in";
+  card.style.animationDelay = "0.4s";
+  
+  let evidenceHTML = '';
+  if (medGap || gapVar || topRatio || sleepHr) {
+     evidenceHTML += `<div class="evidence-block">`;
+     if (medGap) evidenceHTML += `<div class="evidence-row"><span class="evidence-key">Median Gap</span><span class="evidence-val">${medGap}</span></div>`;
+     if (gapVar) evidenceHTML += `<div class="evidence-row"><span class="evidence-key">Gap Variance</span><span class="evidence-val">${gapVar}</span></div>`;
+     if (topRatio) evidenceHTML += `<div class="evidence-row"><span class="evidence-key">Top of Hour Hit</span><span class="evidence-val">${topRatio}</span></div>`;
+     if (sleepHr) evidenceHTML += `<div class="evidence-row"><span class="evidence-key">Avg Sleep Cycle</span><span class="evidence-val">${sleepHr}</span></div>`;
+     evidenceHTML += `</div>`;
+  }
+
+  card.innerHTML = `
+    <div class="card-header">
+      <div class="card-title-row">
+        <span class="card-icon">⏱️</span>
+        <span class="card-title">4. Rhythm Analysis</span>
+      </div>
+      <div class="card-badge ${isBot ? 'bot' : 'human'}">${isBot ? 'Automated' : 'Biological'}</div>
+    </div>
+    <div class="card-prob" style="color: ${Utils.getProbColor(prob)}; display: flex; align-items: baseline; gap: var(--space-8);">
+      <div><span class="animate-pct" data-val="${probPct}">0</span>%</div>
+      <div style="font-size: var(--text-meta); color: var(--text-secondary); font-weight: 500; font-family: var(--font-sans);">Conf: ${confPct}%</div>
+    </div>
+    <div class="prob-bar-track">
+      <div class="prob-bar-fill animate-bar" style="width: 0%; background: ${Utils.getProbColor(prob)};" data-width="${probPct}"></div>
+    </div>
+    ${evidenceHTML}
+    <div class="assessment-block">
+      <div class="assessment-label">Cadence Profile</div>
+      <div class="assessment-text">${cadenceDesc}</div>
+    </div>
+  `;
+  return card;
+}
+
+// ── 15. Activity Data Rendering ───────────────────────────────────────────────
+function renderActivityData(scrapedData) {
+  const cPosts = DOM.results.recentPosts;
+  const cComments = DOM.results.recentComments;
+  const cTimeline = DOM.results.timeline;
+  
+  if (!cPosts || !cComments || !cTimeline) return;
+  
+  const activityPanel = DOM.results.panel.querySelector('.activity-panel') || document.querySelector('.activity-panel');
+
+  let rawItems = [];
+  if (scrapedData?.timeline && Array.isArray(scrapedData.timeline)) {
+    rawItems = scrapedData.timeline;
+  } else if (scrapedData?.messages?.messages && Array.isArray(scrapedData.messages.messages)) {
+    rawItems = scrapedData.messages.messages;
+  }
+
+  if (rawItems.length === 0) {
+    if (activityPanel) activityPanel.style.display = 'none';
+    return;
+  } else {
+    if (activityPanel) activityPanel.style.display = '';
+  }
+
+  const posts = rawItems.filter(i => i.type === 'post').slice(0, 5);
+  const comments = rawItems.filter(i => i.type === 'comment').slice(0, 5);
+  
+  const validTimelineItems = rawItems.filter(i => i.timestamp);
+  validTimelineItems.sort((a, b) => b.timestamp - a.timestamp);
+  const timelineLimit = validTimelineItems.slice(0, 10);
+
+  // Render Posts
+  if (posts.length === 0) {
+     cPosts.parentElement.style.display = 'none';
+  } else {
+     cPosts.parentElement.style.display = '';
+     cPosts.innerHTML = posts.map(item => `
+      <div class="evidence-row" style="padding-bottom: var(--space-8); border-bottom: 1px dashed var(--border-neutral);">
+        <div style="flex: 1; min-width: 0;" class="assessment-text">
+          <span style="margin-right: 6px;">📄</span>
+          ${Utils.escHtml(FormatUtils.truncatePost(item.text))}
+        </div>
+        ${item.timestamp ? `<div class="evidence-key" style="margin-left: var(--space-12); font-size: var(--text-meta); flex-shrink:0;">${Utils.formatTimeAgo(item.timestamp)}</div>` : ''}
+      </div>
+    `).join("");
+  }
+
+  // Render Comments
+  if (comments.length === 0) {
+     cComments.parentElement.style.display = 'none';
+  } else {
+     cComments.parentElement.style.display = '';
+     cComments.innerHTML = comments.map(item => `
+      <div class="evidence-row" style="padding-bottom: var(--space-8); border-bottom: 1px dashed var(--border-neutral);">
+        <div style="flex: 1; min-width: 0;" class="assessment-text">
+          <span style="margin-right: 6px;">💬</span>
+          ${Utils.escHtml(FormatUtils.truncateComment(item.text))}
+        </div>
+        ${item.timestamp ? `<div class="evidence-key" style="margin-left: var(--space-12); font-size: var(--text-meta); flex-shrink:0;">${Utils.formatTimeAgo(item.timestamp)}</div>` : ''}
+      </div>
+    `).join("");
+  }
+
+  // Render Timeline
+  if (timelineLimit.length === 0) {
+     cTimeline.parentElement.style.display = 'none';
+  } else {
+     cTimeline.parentElement.style.display = '';
+     cTimeline.innerHTML = timelineLimit.map(item => {
+        const ts = FormatUtils.formatTimestamp(item.timestamp);
+        const typeLabel = item.type === 'post' ? 'Post' : 'Comment';
+        const textPreview = item.type === 'post' ? FormatUtils.truncatePost(item.text) : FormatUtils.truncateComment(item.text);
+        
+        return `
+          <div style="display: flex; gap: var(--space-12); margin-bottom: var(--space-12);">
+            <div style="width: 8px; height: 8px; border-radius: var(--radius-pill); background-color: var(--accent-blue); margin-top: 6px; flex-shrink: 0;"></div>
+            <div style="display: flex; flex-direction: column; min-width: 0;">
+              <span class="evidence-key" style="font-family: var(--font-mono); font-size: var(--text-meta);">
+                ${ts.date}, ${ts.time} &bull; ${typeLabel}
+              </span>
+              <span class="assessment-text" style="margin-top: 4px;">${Utils.escHtml(textPreview)}</span>
+            </div>
+          </div>
+        `;
+      }).join("");
+  }
+  
+  if (posts.length === 0 && comments.length === 0 && timelineLimit.length === 0) {
+    if (activityPanel) activityPanel.style.display = 'none';
+  }
+}
+
+// ── 16. Export Utilities ──────────────────────────────────────────────────────
+const ExportManager = {
+  downloadPDF() {
+    window.print(); // Relies on Electron native interception
+  },
+  
+  exportJSON() {
+    if (!AppState.apiResult || !AppState.scrapedData) return;
+    
+    const manifest = {
+      intelliTrace_version: CONSTANTS.SYSTEM_VERSION,
+      target_username: AppState.currentUsername,
+      export_timestamp: new Date().toISOString(),
+      ensemble_result: AppState.apiResult,
+      raw_telemetry: AppState.scrapedData
+    };
+    
+    const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: "application/json" });
+    const localUrl = URL.createObjectURL(blob);
+    
+    const anchor = document.createElement("a");
+    anchor.href = localUrl;
+    anchor.download = `ITR_Export_${AppState.currentUsername}_${Date.now()}.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    
+    // Cleanup
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(localUrl);
+  }
+};
