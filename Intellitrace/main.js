@@ -3,13 +3,14 @@ const path = require("path");
 const { spawn } = require("child_process");
 const fs = require("fs");
 
+// ── GLOBAL STORAGE PATH ──────────────────────────────────────────────────────
+const userStorageDir = app.getPath("userData");
+console.log("\n=======================================================");
+console.log(`[SYSTEM] App Data Directory: ${userStorageDir}`);
+console.log("=======================================================\n");
+
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 
-/**
- * Automatically detects where the scraper binary is located.
- * Checks the local project directory first (for development or Linux system-electron),
- * then falls back to process.resourcesPath (for packaged production builds).
- */
 function getResourcePath(...segments) {
   const devPath = path.join(__dirname, ...segments);
   if (fs.existsSync(devPath)) {
@@ -28,7 +29,7 @@ function createWindow() {
     height: 700,
     minWidth: 720,
     minHeight: 560,
-    frame: false,          // custom title-bar
+    frame: false,
     backgroundColor: "#0c0e14",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -38,7 +39,6 @@ function createWindow() {
   });
 
   win.loadFile("index.html");
-  // win.webContents.openDevTools(); // Uncomment for debugging during demo
 }
 
 app.whenReady().then(createWindow);
@@ -55,23 +55,86 @@ ipcMain.on("window-maximize", () =>
 );
 ipcMain.on("window-close", () => win?.close());
 
-// ── GLOBAL STORAGE PATH ──────────────────────────────────────────────────────
-// Windows: %APPDATA%/reddit-bot-detector/
-// Linux:   ~/.config/reddit-bot-detector/
-const userStorageDir = app.getPath("userData");
+// ── IPC: REDDIT AUTHENTICATION ───────────────────────────────────────────────
+
+ipcMain.handle("reddit-login", async () => {
+  console.log("[AUTH] Opening Reddit login window...");
+  
+  return new Promise((resolve) => {
+    let isResolved = false;
+    const authWin = new BrowserWindow({ 
+      width: 500, 
+      height: 700, 
+      autoHideMenuBar: true,
+      title: "Reddit Authentication"
+    });
+
+    authWin.loadURL("https://www.reddit.com/login");
+
+    const checkInterval = setInterval(async () => {
+      if (authWin.isDestroyed()) return;
+      
+      const cookies = await authWin.webContents.session.cookies.get({});
+      const hasSession = cookies.some((c) => c.name === "reddit_session");
+
+      if (hasSession && !isResolved) {
+        console.log("[AUTH] Session cookie detected. Extracting credentials...");
+        isResolved = true;
+        clearInterval(checkInterval);
+        
+        const pwCookies = cookies.map((c) => {
+          let ss = "Lax";
+          if (c.sameSite === "no_restriction" || c.sameSite === "None") {
+            ss = "None";
+          } else if (c.sameSite === "strict" || c.sameSite === "Strict") {
+            ss = "Strict";
+          }
+
+          return {
+            name: c.name,
+            value: c.value,
+            domain: c.domain,
+            path: c.path,
+            expires: c.expirationDate || (Date.now() / 1000) + (86400 * 30),
+            httpOnly: c.httpOnly || false,
+            secure: c.secure || false,
+            sameSite: ss,
+          };
+        });
+
+        const statePath = path.join(userStorageDir, "reddit_state.json");
+        fs.writeFileSync(statePath, JSON.stringify({ cookies: pwCookies, origins: [] }, null, 2));
+        
+        console.log(`[AUTH] Success! State saved to: ${statePath}`);
+        
+        authWin.close();
+        resolve(true);
+      }
+    }, 1000);
+
+    authWin.on("closed", () => {
+      clearInterval(checkInterval);
+      if (!isResolved) {
+        console.log("[AUTH] Window closed by user without logging in.");
+        isResolved = true;
+        resolve(false);
+      }
+    });
+  });
+});
 
 // ── IPC: RUN SCRAPER EXE ─────────────────────────────────────────────────────
 
 ipcMain.on("run-scraper", (event, { username }) => {
-  // Use .exe on Windows, extensionless binary on Linux/macOS
   const execName = process.platform === "win32" ? "Scrapingtool.exe" : "Scrapingtool";
-
-  // CHANGED: Pass BOTH the folder name ("Scrapingtool") AND the executable name
-  // This resolves to -> Intellitrace/Scrapingtool/Scrapingtool
   const exePath = getResourcePath("Scrapingtool", execName);
 
-  // Safety check to ensure the scraper exists
+  console.log(`\n[SCRAPER] Launching for target: ${username}`);
+  console.log(`[SCRAPER] Executable path: ${exePath}`);
+  console.log(`[SCRAPER] Working directory: ${userStorageDir}`);
+
   if (!fs.existsSync(exePath)) {
+    console.error(`[SCRAPER ERROR] Executable NOT FOUND at ${exePath}`);
     event.sender.send("scraper-event", {
       event: "error",
       data: `${execName} not found at:\n${exePath}`,
@@ -79,32 +142,30 @@ ipcMain.on("run-scraper", (event, { username }) => {
     return;
   }
 
-  // Spawn the process
   const proc = spawn(exePath, [username], {
-    cwd: userStorageDir, // Run inside userData directory so it can save JSON without permission errors
-    env: { ...process.env, PYTHONIOENCODING: "utf-8" } // Force UTF-8 to handle emojis
+    cwd: userStorageDir, 
+    env: { ...process.env, PYTHONIOENCODING: "utf-8" },
   });
 
   proc.stdout.on("data", (buf) => {
-    event.sender.send("scraper-event", { event: "stdout", data: buf.toString() });
+    const msg = buf.toString().trim();
+    if (msg) console.log(`[PY-OUT] ${msg}`);
+    event.sender.send("scraper-event", { event: "stdout", data: msg });
   });
 
   proc.stderr.on("data", (buf) => {
-    event.sender.send("scraper-event", { event: "stderr", data: buf.toString() });
+    const msg = buf.toString().trim();
+    if (msg) console.error(`[PY-ERR] ${msg}`);
+    event.sender.send("scraper-event", { event: "stderr", data: msg });
   });
 
   proc.on("close", (code) => {
-    if (code === 0) {
-      event.sender.send("scraper-event", { event: "done", data: code });
-    } else {
-      event.sender.send("scraper-event", {
-        event: "error",
-        data: `Process exited with code ${code}`,
-      });
-    }
+    console.log(`[SCRAPER] Process exited with code ${code}`);
+    event.sender.send("scraper-event", { event: "done", data: code });
   });
 
   proc.on("error", (err) => {
+    console.error(`[SCRAPER ERROR] Process failed to start: ${err.message}`);
     event.sender.send("scraper-event", { event: "error", data: err.message });
   });
 });
@@ -112,14 +173,16 @@ ipcMain.on("run-scraper", (event, { username }) => {
 // ── IPC: READ SCRAPED JSON ───────────────────────────────────────────────────
 
 ipcMain.handle("read-json", (_event, { username }) => {
-  // Look for the JSON exactly where the scraper saved it
   const filePath = path.join(userStorageDir, "UserData", `formatted_${username}.json`);
+  console.log(`[READ JSON] Attempting to load: ${filePath}`);
   
   if (!fs.existsSync(filePath)) {
+    console.error(`[READ JSON] File not found: ${filePath}`);
     throw new Error(`JSON file not found: ${filePath}`);
   }
   
   const raw = fs.readFileSync(filePath, "utf8");
+  console.log(`[READ JSON] Successfully loaded ${raw.length} bytes.`);
   return JSON.parse(raw);
 });
 
@@ -131,10 +194,9 @@ ipcMain.handle("load-settings", () => {
   try {
     return JSON.parse(fs.readFileSync(SETTINGS_PATH, "utf8"));
   } catch {
-    // Default values for the demo
     return { 
       apiUrl: "https://cel-est-ial-34929-botdetectionbackend.hf.space", 
-      apiKey: "" 
+      apiKey: "", 
     };
   }
 });

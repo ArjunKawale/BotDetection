@@ -226,22 +226,25 @@ usernameInput.addEventListener("keydown", (e) => {
 });
 
 async function startScan() {
-  const raw = usernameInput.value.trim().replace(/^u\//i, "");
+  const raw = usernameInput.value.trim().replace(/^u\//i, "").replace(/^@/, "");
   if (!raw || scanning) return;
 
   const username = raw;
+  const isBsky = username.includes(".");
+  const displayTag = isBsky ? `@${username}` : `u/${username}`;
+
   setBusy(true);
   resetStepper();
   logPanel.innerHTML = "";
   resultPanel.innerHTML = "";
-  scanningUsername.textContent = `u/${username}`;
+  scanningUsername.textContent = displayTag;
 
   // Make sure terminal is open when starting
   terminalCard.classList.remove("collapsed");
 
   showView("scanning");
 
-  log(`Starting analysis for u/${username}`, "info");
+  log(`Starting analysis for ${displayTag}`, "info");
 
   // ── STAGE 1: run scraper ──────────────────────────────────────────────────
 
@@ -282,7 +285,27 @@ async function startScan() {
 
 function runScraper(username) {
   return new Promise((resolve) => {
-    const cleanup = electronAPI.onScraperEvent((ev) => {
+    const cleanup = electronAPI.onScraperEvent(async (ev) => {
+      
+      // Intercept our custom Python Auth Error
+      if (ev.event === "stderr" && ev.data.includes("AUTH_REQUIRED")) {
+        cleanup();
+        log("Reddit authentication required. Opening login window...", "warn");
+        
+        // Pause and wait for the user to log in via Electron
+        const loggedIn = await electronAPI.redditLogin();
+        if (loggedIn) {
+          log("Authentication successful! Resuming data retrieval...", "ok");
+          // Re-run the scraper now that reddit_state.json exists
+          resolve(await runScraper(username)); 
+        } else {
+          log("Authentication cancelled by user.", "err");
+          updateStepper("scraping", "error");
+          resolve(false);
+        }
+        return;
+      }
+
       if (ev.event === "stdout") {
         log(ev.data.trim(), "info");
       } else if (ev.event === "stderr") {
@@ -397,7 +420,6 @@ async function streamFromApi(username, payload) {
 }
 
 // ── EVIDENCE FIELD MAPS (Behavioral Analysis) ─────────────────────────────────
-// Strict mapping: Only fields found in the processed JSON will render.
 
 const FREQUENCY_METRICS = [
   { label: "Total Posts Analyzed", keys: ["total_posts_analyzed", "total_posts", "posts_analyzed", "post_count"] },
@@ -435,7 +457,6 @@ function probabilityTier(p) {
   return "high";
 }
 
-// Recursively search for the key across the provided result object to ensure resilience.
 function getMetricValue(data, keys, fullResult) {
   for (const key of keys) {
     if (data && data[key] !== undefined && data[key] !== null && data[key] !== "") return data[key];
@@ -504,7 +525,6 @@ function getVerdictExplanation(prob) {
 
 // ── CARD BODY BUILDERS ────────────────────────────────────────────────────────
 
-// Semantic Engine Cards
 function semanticCardBody(d, assessmentField) {
   const assessment = d[assessmentField] ?? d.pattern_description ?? d.reasoning ?? "";
   return `
@@ -517,7 +537,6 @@ function semanticCardBody(d, assessmentField) {
   `;
 }
 
-// Behavioral Engine Cards
 function behavioralCardBody(d, prob, kind, metricList, fullResult) {
   const tier = probabilityTier(prob);
   const assessment = ASSESSMENT_TEXT[kind][tier];
@@ -541,6 +560,10 @@ function renderResult(result) {
   const fa = result.full_analysis ?? {};
   const verdictExplanation = getVerdictExplanation(prob);
 
+  // Determine appropriate prefix/tag
+  const isBsky = result.username && result.username.includes(".");
+  const displayTag = isBsky ? `@${escHtml(result.username)}` : `u/${escHtml(result.username)}`;
+
   // Verdict banner
   const banner = document.createElement("div");
   banner.className = `verdict ${isBot ? "bot" : "human"} fade-in`;
@@ -548,7 +571,7 @@ function renderResult(result) {
     <div class="verdict-left">
       <div class="verdict-icon">${isBot ? "🤖" : "👤"}</div>
       <div class="verdict-info">
-        <div class="verdict-username">u/${escHtml(result.username)}</div>
+        <div class="verdict-username">${displayTag}</div>
         <div class="verdict-label">LIKELY ${isBot ? "BOT" : "HUMAN"}</div>
         <div class="verdict-sub">Overall Verdict</div>
         <div class="verdict-desc">${escHtml(verdictExplanation)}</div>
@@ -603,7 +626,6 @@ function renderResult(result) {
   ];
 
   cards.forEach(({ title, icon, data, probKey, type, extra }, i) => {
-    // Graceful fallback structure for dynamic payloads
     const cardData = data || {}; 
     const p = cardData[probKey] ?? (i > 1 ? result.frequency_data ?? 0 : 0);
     const botish = p >= 0.5;
@@ -631,7 +653,7 @@ function renderResult(result) {
 
   resultPanel.appendChild(grid);
 
-  // Animations - Execute smoothly when DOM is painted
+  // Animations
   setTimeout(() => {
     const overBar = document.getElementById("overall-bar");
     if (overBar) overBar.style.width = `${prob * 100}%`;

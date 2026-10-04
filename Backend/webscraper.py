@@ -29,39 +29,6 @@ def get_chrome_path() -> Path | None:
             return chrome_exec
     return None
 
-async def ensure_authenticated_session() -> None:
-    """If no saved login state exists, opens a visible browser for one-time manual login."""
-    if STATE_FILE.exists():
-        return
-
-    log.info("[*] No saved Reddit session found. Opening browser for one-time login...")
-    async with async_playwright() as p:
-        exe = get_chrome_path()
-        launch_kwargs = {"headless": False}
-        if exe:
-            launch_kwargs["executable_path"] = str(exe)
-
-        browser = await p.chromium.launch(**launch_kwargs)
-        context = await browser.new_context(viewport={"width": 1280, "height": 800}, locale="en-US")
-        page = await context.new_page()
-
-        await page.goto("https://www.reddit.com/login", wait_until="domcontentloaded")
-        print("\n" + "=" * 60)
-        print(">>> Please LOG IN to Reddit in the opened browser window.")
-        print(">>> Once logged in successfully, press ENTER in this terminal.")
-        print("=" * 60 + "\n")
-
-        await asyncio.to_thread(input, "Press ENTER after logging in... ")
-
-        # Save cookies & storage state
-        await context.storage_state(path=str(STATE_FILE))
-        try:
-            os.chmod(STATE_FILE, 0o600)
-        except OSError:
-            pass
-        log.info("[+] Session saved successfully to %s", STATE_FILE)
-        await browser.close()
-
 async def _fetch_user_json(context, username: str):
     """Fetches user activity using Reddit's user listing JSON via authenticated browser context."""
     cutoff = (datetime.now(timezone.utc) - timedelta(days=WINDOW_DAYS)).timestamp()
@@ -136,7 +103,10 @@ async def _fetch_user_json(context, username: str):
     return full_timestamp_timeline, recent_text_items
 
 async def _scrape_hybrid_data_async(username: str):
-    await ensure_authenticated_session()
+    # Fail fast and trigger the Electron frontend login flow
+    if not STATE_FILE.exists():
+        print("[!] AUTH_REQUIRED: reddit_state.json not found.", file=sys.stderr)
+        sys.exit(2)
 
     async with async_playwright() as p:
         exe = get_chrome_path()
