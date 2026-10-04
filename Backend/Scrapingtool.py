@@ -15,8 +15,9 @@ from ConvText import (
 from bsky_scraper import scrape_bluesky_user
 from webscraper import calculate_rhythmic_features
 
+
 def process_target(target: str):
-    # Sanitize input
+    # Sanitize input: remove leading @ or u/
     target = target.strip().lstrip("@")
     if target.startswith("u/"):
         target = target[2:]
@@ -25,8 +26,8 @@ def process_target(target: str):
     os.makedirs("UserData", exist_ok=True)
 
     try:
-        # Route: Bluesky
-        if ".bsky" in target or target.endswith(".social"):
+        # Route to Bluesky: any domain-style handle containing a dot
+        if "." in target:
             times, texts = scrape_bluesky_user(target)
             if not times and not texts:
                 print(f"[!] Error: No data found for Bluesky user '{target}'.")
@@ -48,7 +49,9 @@ def process_target(target: str):
             # Match Pydantic's MessagesWrapper schema
             user_messages = {
                 "username": target,
-                "messages": [{"type": msg["type"], "text": msg["text"]} for msg in texts]
+                "messages": [
+                    {"type": msg["type"], "text": msg["text"]} for msg in texts
+                ],
             }
 
             formatted_data = {
@@ -58,11 +61,13 @@ def process_target(target: str):
                 "rhythm_features": rhythm_dict,
             }
 
-        # Route: Reddit
+        # Route to Reddit (standard alphanumeric usernames)
         else:
             raw_file_path = scrape_and_save_user_data(target)
             if not os.path.exists(raw_file_path):
-                print(f"[!] Error: Raw data file for Reddit user '{target}' was not created.")
+                print(
+                    f"[!] Error: Raw data file for Reddit user '{target}' was not created."
+                )
                 sys.exit(1)
 
             print(f"[*] Raw data saved to {raw_file_path}. Formatting now...")
@@ -87,9 +92,14 @@ def process_target(target: str):
         print(f"[!] Error during processing: {e}")
         sys.exit(1)
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Scrape and format user data across platforms.")
-    parser.add_argument("target", help="Reddit username or Bluesky handle")
+    parser = argparse.ArgumentParser(
+        description="Scrape and format user data across platforms."
+    )
+    parser.add_argument(
+        "target", help="Reddit username or Bluesky handle to scrape"
+    )
     args = parser.parse_args()
 
     process_target(args.target)

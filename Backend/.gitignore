@@ -6,3 +6,4 @@ build/
 UserData/
 chromium-1228/
 venv/
+reddit_state.json
