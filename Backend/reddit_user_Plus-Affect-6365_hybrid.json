@@ -1,0 +1,289 @@
+{
+  "username": "Plus-Affect-6365",
+  "meta": {
+    "backend": "html",
+    "status": "ok",
+    "fetched_at_utc": "2026-10-04T05:12:38.040274+00:00",
+    "window_days": 7,
+    "skipped_no_timestamp": 0
+  },
+  "rhythm_features_7_day_basis": {
+    "total_posts": 42,
+    "posting_frequency_days": 3.336667,
+    "median_gap_seconds": 288288.0,
+    "gap_variance": 301705661186.26,
+    "top_of_hour_ratio": 0.0238,
+    "hour_variance": 20.87,
+    "avg_sleep_hours": 896.25
+  },
+  "recent_100_messages": [
+    {
+      "type": "comment",
+      "text": "Well when it was discovered Sunny n cohort were awakened and later masters so they couldn't exactly \"own\" the citadel.\n\nAfter TOA sunny was forgotten by everyone So they didn't know who exactly found the ivory tower, probably thought it was Cassie or mordret and gave it up to nephis anyways Sunny was far too depressed to care,spent around 5 years getting back in the game,also even if he tried getting it back he would have to fight entire cohort along with valor which wasn't worth it for a mere citadel.\n\nLater they become supreme and regain his fate but he already has multiple citadels Didn't really need this one.\n\nIts probably a symbolism thing as well with nephis's citadel being white and capable of flight and sunnys being dark and capable of teleportation.\n\nThe nameless temple is also better for him, even VTB was scared by the invisible guardian and hence didn't steal it, ivory tower would be gone if sunny held it. So overall it was better used by nephis.\n\nThat's all bullshit tho the truth is that the entirety of a slave's possesion belongs to his master.",
+      "timestamp": 1789230753
+    },
+    {
+      "type": "post",
+      "text": "Made a tool for dMAT Latin Squares Practice",
+      "timestamp": 1788599810,
+      "title": "Made a tool for dMAT Latin Squares Practice",
+      "body": null
+    },
+    {
+      "type": "comment",
+      "text": "The .conf configuration format is outdated and will no longer be supported by hyprland\n\nChange to hyprland.lua and rewrite ur config Here's their sample https://github.com/hyprwm/Hyprland/blob/main/example/hyprland.lua",
+      "timestamp": 1787315314
+    },
+    {
+      "type": "comment",
+      "text": "Start by learning qml.\nU only need to understand basics like components,signals,items,how to draw shapes n curves(shape path/canvas),repeater,some basic syntax and programming quirks/features of qml.\n\nI started with https://www.youtube.com/watch?v=RWd-zjclFB0&list=PLP7UmEJ9z4mpi0JXcPS0VRK-7eFAfROZI If you go with this remember to SKIP ALL THE C/C++ stuff it is NOT needed for ricing tasks.\n\nI would instead recommend watching https://www.youtube.com/watch?v=k0fyXP6YaRk&t=236s There are only 2 videos (part 1 ,part 2) dedicated purely to quickshell/qml but it is a great starting point.\n\nNow quickshell is a framework on top of qml so there is no dedicated playlist(afaik), it is easy to say \"just read the docs\" but that can be exhausting I'd say just skim the docs first read whatever u find interesting and research when u need a specific feature/component.\n\nAlso the best way to learn is by observing and understanding existing projects on github notably the caelestia shell which I found to be quite neat.\n\nIf you open the caelestia shell github u can see how they have modularised the project building tiny but highly customised ui elements and combining them together whenever needed enabling reusability and clean division of components.U can ofcourse look up system design principles or project management rules somewhere but I personally find breaking down your components into small reusable parts structured properly and dedicated files for signal management and backend management to be enough. I m ofcourse a newbie so theres probably a lot more stuff to do that makes ur code easy to read and configure so u may have to do more research on this.\n\nIf u are using Ai (it can actually be pretty good for learning/syntax correction/searches) pls know that its absolutely shit at qml/quickshell and even hyprland syntax to some extent.Maybe it is because qml is relatively niche when compared to html css js etc.\nBut that does not mean it is not helpful, if u attach docs/discussion/proper context give good prompts and understand what u are doing it will speed up your learning process and the project by a lot.I will recommend using a tool like repomix which generates xml of ur git repositories to provide context to ai, u can ofcourse make one of a popular git repo (like caelestia) to try to understand it better.\n\nAi is still unreliable so ensure u have proper vcs , actually understand the project and u are looking up discussions/tutorials/projects by real humans so as to get the best results.\n\nAll the best!",
+      "timestamp": 1783973593
+    },
+    {
+      "type": "comment",
+      "text": "Wait what? Looked up noctalia and it looks nothing like this? Confusing ragebait ngl.",
+      "timestamp": 1783661082
+    },
+    {
+      "type": "comment",
+      "text": "https://motionbgs.com/dark-heart-of-space",
+      "timestamp": 1783196147
+    },
+    {
+      "type": "comment",
+      "text": "yep for sure",
+      "timestamp": 1783180724
+    },
+    {
+      "type": "comment",
+      "text": "Thank you all for the kind responses, I'll make another post once everything's finished and publish the final repo.",
+      "timestamp": 1783180549
+    },
+    {
+      "type": "comment",
+      "text": "Its pretty low on normal wallpaper (1% on both cpu &gpu)\nfor live wallpaper cpu is ~6% and gpu spikes upto 40-50%,I do however have intel Xe graphics so not a dedicated gpu.",
+      "timestamp": 1783180261
+    },
+    {
+      "type": "comment",
+      "text": "Lmao, I was originally gonna go with Bad Apple, but then saw this showcase, really liked the BGM, and ended up going with one of the artist's other songs instead.",
+      "timestamp": 1783179996
+    },
+    {
+      "type": "post",
+      "text": "[Hyprland] First Rice! (quickshell)\n\nI had known about Linux's insane customization ability for a while, finally decided to switch around a month ago after I got my mind blown by the Caelestia shell.\n\nI went with their stack of Hyprland + Quickshell thinking it would be easy since I have some previous experience with Linux and have done some minor frontend development (React, HTML, CSS, JS) in the past. Qt/QML was something else though, took me a while to get used to it.\n\nHere's the stack:\n\nWindow Manager: Hyprland\nWidgets/Panels/Wallpaper/Animation/Theme Switching: Quickshell\nNotifications: swaync\nFile Manager: Thunar\nApp Launcher: Rofi\nMusic Player: rmpc and cava\nSystem Monitor: btop\nClipboard: clipse\nIdle Window: hypridle (animation is unimatrix)\nWindow Overview: Got lazy on this one and decided to modify files from here (great repo btw, very easy to configure)\nIcons: Colorful-Dark-Icons\nBackground Music: 3:03 PM by Sharou\n\nNow the animations/UI need some work and there are plenty of bugs that need fixing. For eg: while customizing Thunar I had the bright idea of writing a script that overwrites global color declarations directly in gtk.css and well, it had an interesting effect on every app not named Thunar that uses GTK CSS.\n\nSo yeah, a lot of work yet to be done. I will fix that and make the repo public later.",
+      "timestamp": 1783097494,
+      "title": "[Hyprland] First Rice! (quickshell)",
+      "body": "I had known about Linux's insane customization ability for a while, finally decided to switch around a month ago after I got my mind blown by the Caelestia shell.\n\nI went with their stack of Hyprland + Quickshell thinking it would be easy since I have some previous experience with Linux and have done some minor frontend development (React, HTML, CSS, JS) in the past. Qt/QML was something else though, took me a while to get used to it.\n\nHere's the stack:\n\nWindow Manager: Hyprland\nWidgets/Panels/Wallpaper/Animation/Theme Switching: Quickshell\nNotifications: swaync\nFile Manager: Thunar\nApp Launcher: Rofi\nMusic Player: rmpc and cava\nSystem Monitor: btop\nClipboard: clipse\nIdle Window: hypridle (animation is unimatrix)\nWindow Overview: Got lazy on this one and decided to modify files from here (great repo btw, very easy to configure)\nIcons: Colorful-Dark-Icons\nBackground Music: 3:03 PM by Sharou\n\nNow the animations/UI need some work and there are plenty of bugs that need fixing. For eg: while customizing Thunar I had the bright idea of writing a script that overwrites global color declarations directly in gtk.css and well, it had an interesting effect on every app not named Thunar that uses GTK CSS.\n\nSo yeah, a lot of work yet to be done. I will fix that and make the repo public later."
+    },
+    {
+      "type": "comment",
+      "text": "Was it Unified Mentor?or something else like stayboost solutions or any variation of clinchbridge soltns?\n\neither way the easisest way to spot a scam is to check if they ask u to join a whatsapp grp,legitimate companies do not do that before shortlisting or a interview.\n\nIncase u see them on linkedin,simply block and report the recruiter profile that has set up the job I have stopped seeing these scams this way.",
+      "timestamp": 1771141453
+    },
+    {
+      "type": "comment",
+      "text": "ok thanks a lot",
+      "timestamp": 1769965979
+    },
+    {
+      "type": "comment",
+      "text": "If u dont mind answering,could u mention the university u attended?was it for aiml/related courses?\n\nI was thinking of applying for tum or other university for masters to get the \"ml degree\" and hopefully improve my resume as I am from tier 3 clg.",
+      "timestamp": 1769965569
+    },
+    {
+      "type": "comment",
+      "text": "Probably remove the <50% hp restriction (so she works even better with furina)\n\nAnd then cons maybe add some sort of aoe?idk probably too good",
+      "timestamp": 1766143890
+    },
+    {
+      "type": "post",
+      "text": "New to Leetcode, are these sort of exploits normal?\n\nSaw this on Container With Most Water problem.\nI dont think the tc via this algo will be 0ms and\n\n__import__(\"atexit\").register(lambda: open(\"display_runtime.txt\", \"w\").write(\"0\"))\n\nlooks fishy.",
+      "timestamp": 1765213100,
+      "title": "New to Leetcode, are these sort of exploits normal?",
+      "body": "Saw this on Container With Most Water problem.\nI dont think the tc via this algo will be 0ms and\n\n__import__(\"atexit\").register(lambda: open(\"display_runtime.txt\", \"w\").write(\"0\"))\n\nlooks fishy."
+    },
+    {
+      "type": "comment",
+      "text": "alright,thanks man",
+      "timestamp": 1762275788
+    },
+    {
+      "type": "comment",
+      "text": "Any style you'd recommend? or do I simply remove the icons?",
+      "timestamp": 1762275496
+    },
+    {
+      "type": "comment",
+      "text": "okay!\nwhat metrics should I display then? I am using a combination of autoencoder and cnn for identification/detection and then classification.",
+      "timestamp": 1762275439
+    },
+    {
+      "type": "comment",
+      "text": "Who else?\nOdysseus?\n\nOff the top of my head I remember Hercules,Achilles,Jason,Theseus and Atalanta.\nnone of them had a good ending.",
+      "timestamp": 1760895895
+    },
+    {
+      "type": "comment",
+      "text": "It is definitely possible to three star that th 11 as a th 10.\nZap out the eagle and the infernos (i think it ll take 4 zaps and one quake to take out one inferno, so eight zaps and two quakes for both of them,place them such that all of spells hit the eagle as well and take it out)\n\nFor the main army use golem +witches, spread out three golems with witches behind,use wall wrecker in the center and send hereos once first layer of walls are opened. CC can have root rider or bowlers . Look up zap witches th 10 strategies on yt.",
+      "timestamp": 1752507495
+    },
+    {
+      "type": "comment",
+      "text": "<image>",
+      "timestamp": 1751205041
+    },
+    {
+      "type": "comment",
+      "text": "I like this Serie-s of comments",
+      "timestamp": 1737394044
+    },
+    {
+      "type": "post",
+      "text": "Which piece can be improved?",
+      "timestamp": 1736235309,
+      "title": "Which piece can be improved?",
+      "body": null
+    },
+    {
+      "type": "comment",
+      "text": "Neuvillete Q/E-->Sucrose Q/E-->Xilonen E+2NA-->Layla E-->Neuvillete CA",
+      "timestamp": 1729509006
+    },
+    {
+      "type": "comment",
+      "text": "Im running a neuvillete(c0r1),sucrose, xilonen, layla team and with the correct rotation he hits around 50k per tick.\n\nU will have to build layla for her shields and give sucrose the vv set, level up xilonen skill and give her cinder city set.Should be ez to clear abyss",
+      "timestamp": 1729505472
+    },
+    {
+      "type": "comment",
+      "text": "<image>",
+      "timestamp": 1721545076
+    },
+    {
+      "type": "comment",
+      "text": "I dont understand, just got a android with snapdragon 695 5G, am i cooked?",
+      "timestamp": 1715234211
+    },
+    {
+      "type": "comment",
+      "text": "kk thanks a lot",
+      "timestamp": 1706422715
+    },
+    {
+      "type": "comment",
+      "text": "I dont have c6 sara so i use her in national team",
+      "timestamp": 1706421828
+    },
+    {
+      "type": "post",
+      "text": "Should I farm for ER sands?",
+      "timestamp": 1706421370,
+      "title": "Should I farm for ER sands?",
+      "body": null
+    },
+    {
+      "type": "comment",
+      "text": "To play with randoms,is to be aware of their positioning ,the enemies positioning,your positioning,the area control,the main threats of enemies and the weakness of your team.The aiming skills,the dodging skills,ammo management, counting enemy ammo,counting enemy gadget all play a vital role and u need to be a good player u need to be good at all of them.All in all u will have to be a jack of all trades",
+      "timestamp": 1701954022
+    },
+    {
+      "type": "comment",
+      "text": "<image>",
+      "timestamp": 1701092087
+    },
+    {
+      "type": "post",
+      "text": "Man,these championship quizzes are hard af",
+      "timestamp": 1700828022,
+      "title": "Man,these championship quizzes are hard af",
+      "body": null
+    },
+    {
+      "type": "comment",
+      "text": "https://youtu.be/wQUH06QRCi4?si=Im1aL4LAwDNUncIz",
+      "timestamp": 1699587585
+    },
+    {
+      "type": "comment",
+      "text": "Yea I feel ittoo",
+      "timestamp": 1699020227
+    },
+    {
+      "type": "comment",
+      "text": "Not a good idea to use primogems wish for specific 4 stars on standard banner. I wanted xingque and did this,went all the way to 78pity and dehya but no xingque. I suggest u wait for sucrose to appear on event wish banner",
+      "timestamp": 1697717624
+    },
+    {
+      "type": "comment",
+      "text": "!remind me 7months",
+      "timestamp": 1696321133
+    },
+    {
+      "type": "comment",
+      "text": "Kk thanks a lot",
+      "timestamp": 1695663520
+    },
+    {
+      "type": "comment",
+      "text": "Is this build good enough for the abyss?",
+      "timestamp": 1695659349
+    },
+    {
+      "type": "comment",
+      "text": "Meant Light of foilar Incison (LOFI)not LOFL",
+      "timestamp": 1695635960
+    },
+    {
+      "type": "post",
+      "text": "Will LOFL/Mistsplitter/Jade cutter be a big improvement?\n\nWith hod passive CR=65.3",
+      "timestamp": 1695635359,
+      "title": "Will LOFL/Mistsplitter/Jade cutter be a big improvement?",
+      "body": "With hod passive CR=65.3"
+    }
+  ],
+  "full_timestamp_timeline": [
+    1695635359,
+    1695635960,
+    1695659349,
+    1695663520,
+    1696321133,
+    1697717624,
+    1699020227,
+    1699587585,
+    1700828022,
+    1701092087,
+    1701954022,
+    1706421370,
+    1706421828,
+    1706422715,
+    1715234211,
+    1721545076,
+    1729505472,
+    1729509006,
+    1736235309,
+    1737394044,
+    1751205041,
+    1752507495,
+    1760895895,
+    1762275439,
+    1762275496,
+    1762275788,
+    1765213100,
+    1766143890,
+    1769965569,
+    1769965979,
+    1771141453,
+    1783097494,
+    1783179996,
+    1783180261,
+    1783180549,
+    1783180724,
+    1783196147,
+    1783661082,
+    1783973593,
+    1787315314,
+    1788599810,
+    1789230753
+  ]
+}

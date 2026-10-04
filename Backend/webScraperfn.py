@@ -30,6 +30,6 @@ def scrape_and_save_user_data(username: str) -> str:
 
 if __name__ == "__main__":
     # Quick test run if executed directly
-    test_user = "Plus-Affect-6365"
+    test_user = "haikusbot"
     saved_path = scrape_and_save_user_data(test_user)
     print(f"\n[+] SUCCESS: Pipeline saved user data to -> {saved_path}")

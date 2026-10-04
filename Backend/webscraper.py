@@ -1,271 +1,220 @@
 import asyncio
 import json
+import logging
 import os
+import random
+import statistics
 import sys
 import time
-from datetime import datetime, timezone, timedelta
-import statistics
 from collections import defaultdict
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from playwright.async_api import async_playwright
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+log = logging.getLogger("webscraper")
 
-def get_chrome_path() -> Path:
-    """
-    Locates the bundled Chromium executable whether running from source
-    or as a frozen PyInstaller binary on Linux.
-    """
-    if getattr(sys, "frozen", False):
-        # PyInstaller extracts to sys._MEIPASS in --onefile mode,
-        # or runs from the executable's directory in --onedir mode
-        base = Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
-    else:
-        base = Path(__file__).parent
+STATE_FILE = Path("reddit_state.json")
+WINDOW_DAYS = 7
+TEXT_TARGET = 100
+MAX_PAGES = 10
 
+def get_chrome_path() -> Path | None:
+    """Locate bundled Chromium executable if available, else let Playwright use its managed binary."""
+    base = Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent)) if getattr(sys, "frozen", False) else Path(__file__).parent
     matches = list(base.glob("chromium-*"))
-    if not matches:
-        raise FileNotFoundError(
-            f"No bundled Chromium found in '{base}'. Ensure chromium-1228 is copied to the project root."
-        )
+    if matches:
+        chrome_exec = matches[0] / "chrome-linux64" / "chrome"
+        if chrome_exec.exists():
+            return chrome_exec
+    return None
 
-    chromium_dir = matches[0]
-    chrome_exec = chromium_dir / "chrome-linux64" / "chrome"
+async def ensure_authenticated_session() -> None:
+    """If no saved login state exists, opens a visible browser for one-time manual login."""
+    if STATE_FILE.exists():
+        return
 
-    if not chrome_exec.exists():
-        raise FileNotFoundError(f"Chromium binary not found at expected path: {chrome_exec}")
+    log.info("[*] No saved Reddit session found. Opening browser for one-time login...")
+    async with async_playwright() as p:
+        exe = get_chrome_path()
+        launch_kwargs = {"headless": False}
+        if exe:
+            launch_kwargs["executable_path"] = str(exe)
 
-    return chrome_exec
+        browser = await p.chromium.launch(**launch_kwargs)
+        context = await browser.new_context(viewport={"width": 1280, "height": 800}, locale="en-US")
+        page = await context.new_page()
 
+        await page.goto("https://www.reddit.com/login", wait_until="domcontentloaded")
+        print("\n" + "=" * 60)
+        print(">>> Please LOG IN to Reddit in the opened browser window.")
+        print(">>> Once logged in successfully, press ENTER in this terminal.")
+        print("=" * 60 + "\n")
 
-async def _scrape_hybrid_data_async(username: str):
-    one_week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).timestamp()
+        await asyncio.to_thread(input, "Press ENTER after logging in... ")
 
+        # Save cookies & storage state
+        await context.storage_state(path=str(STATE_FILE))
+        try:
+            os.chmod(STATE_FILE, 0o600)
+        except OSError:
+            pass
+        log.info("[+] Session saved successfully to %s", STATE_FILE)
+        await browser.close()
+
+async def _fetch_user_json(context, username: str):
+    """Fetches user activity using Reddit's user listing JSON via authenticated browser context."""
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=WINDOW_DAYS)).timestamp()
     full_timestamp_timeline = []
     recent_text_items = []
-    collected_100 = False
 
-    print(f" Processing user /u/{username} via Playwright DOM scraping...")
+    after = None
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/plain, */*",
+    }
 
-    async with async_playwright() as p:
-        # Launch using the bundled Chromium binary path
-        browser = await p.chromium.launch(
-            executable_path=str(get_chrome_path()),
-            headless=True,
-            args=[
-                "--disable-blink-features=AutomationControlled",
-                "--no-sandbox",
-                "--disable-infobars"
-            ]
-        )
+    for page_idx in range(MAX_PAGES):
+        url = f"https://www.reddit.com/user/{username}/overview.json?limit=100&raw_json=1"
+        if after:
+            url += f"&after={after}"
 
-        context = await browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
-            viewport={"width": 1280, "height": 800},
-            locale="en-US",
-            extra_http_headers={
-                "Accept-Language": "en-US,en;q=0.9",
-                "Sec-Ch-Ua": '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
-                "Sec-Ch-Ua-Mobile": "?0",
-                "Sec-Ch-Ua-Platform": '"Windows"',
-                "Sec-Fetch-Dest": "document",
-                "Sec-Fetch-Mode": "navigate",
-                "Sec-Fetch-Site": "none",
-                "Sec-Fetch-User": "?1",
-                "Upgrade-Insecure-Requests": "1"
-            }
-        )
+        log.info(f"[*] Requesting page {page_idx + 1} for u/{username}...")
+        resp = await context.request.get(url, headers=headers)
 
-        page = await context.new_page()
-        await page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        if resp.status == 429:
+            log.warning("[!] Rate limited by Reddit. Sleeping 10 seconds...")
+            await asyncio.sleep(10)
+            continue
 
-        current_url = f"https://old.reddit.com/user/{username}/"
+        if resp.status != 200:
+            log.warning(f"[!] Endpoint returned HTTP {resp.status}. Response: {await resp.text()[:200]}")
+            break
 
-        try:
-            while True:
-                response = await page.goto(current_url, wait_until="domcontentloaded", timeout=20000)
-                if response.status != 200:
-                    print(f"[ERROR] Status: {response.status} on {current_url}")
-                    break
+        data = await resp.json()
+        children = data.get("data", {}).get("children", [])
+        if not children:
+            break
 
-                await page.wait_for_timeout(1500)
+        for item in children:
+            d = item.get("data", {})
+            kind = item.get("kind")
+            ts = d.get("created_utc")
+            if not ts:
+                continue
 
-                # Extract all things on the current page via JS
-                page_items = await page.evaluate("""() => {
-                    const results = [];
-                    const things = document.querySelectorAll('.thing:not(.promotedlink)');
+            # Determine post or comment
+            is_post = (kind == "t3")
+            if is_post:
+                title = d.get("title", "")
+                selftext = d.get("selftext", "").strip()
+                text = f"{title}\n\n{selftext}" if selftext else title
+                msg_type = "post"
+            else:
+                text = d.get("body", "")
+                msg_type = "comment"
 
-                    things.forEach(el => {
-                        const permalink = el.getAttribute('data-permalink');
-                        const dataType = el.getAttribute('data-type');
+            # Store recent 100 text messages
+            if len(recent_text_items) < TEXT_TARGET:
+                recent_text_items.append({
+                    "type": msg_type,
+                    "text": text,
+                    "timestamp": ts
+                })
+                full_timestamp_timeline.append(ts)
+            elif ts >= cutoff:
+                full_timestamp_timeline.append(ts)
+            else:
+                return full_timestamp_timeline, recent_text_items
 
-                        // 1. Try top-level data-timestamp (Works for Posts)
-                        let rawTs = el.getAttribute('data-timestamp');
-                        let timestamp = rawTs ? (parseInt(rawTs, 10) / 1000) : null;
+        after = data.get("data", {}).get("after")
+        if not after:
+            break
 
-                        // 2. Fallback: Check nested <time> tag (Required for Comments on Old Reddit)
-                        if (!timestamp) {
-                            const timeEl = el.querySelector('time[datetime]');
-                            if (timeEl) {
-                                const dtStr = timeEl.getAttribute('datetime');
-                                const parsedDate = Date.parse(dtStr);
-                                if (!isNaN(parsedDate)) {
-                                    timestamp = parsedDate / 1000;
-                                }
-                            }
-                        }
-
-                        let title = null;
-                        let text = null;
-
-                        if (dataType === 'link' || el.classList.contains('link')) {
-                            const titleEl = el.querySelector('a.title');
-                            title = titleEl ? titleEl.innerText.trim() : 'Untitled Post';
-
-                            const bodyEl = el.querySelector('.usertext-body .md');
-                            text = bodyEl ? bodyEl.innerText.trim() : null;
-                        } else {
-                            const bodyEl = el.querySelector('.usertext-body .md');
-                            text = bodyEl ? bodyEl.innerText.trim() : 'No text content';
-                        }
-
-                        results.push({
-                            type: (dataType === 'link' || el.classList.contains('link')) ? 'post' : 'comment',
-                            title: title,
-                            text: text,
-                            timestamp: timestamp
-                        });
-                    });
-
-                    return results;
-                }""")
-
-                if not page_items:
-                    break
-
-                for item in page_items:
-                    ts = item["timestamp"]
-                    if not ts:
-                        continue
-
-                    # -------------------------------
-                    # PHASE 1: FIRST 100 ACTIVITIES
-                    # -------------------------------
-                    if len(recent_text_items) < 100:
-                        text_val = item["title"] if item["type"] == "post" else item["text"]
-                        recent_text_items.append({
-                            "type": item["type"],
-                            "text": text_val,
-                            "timestamp": ts
-                        })
-                        full_timestamp_timeline.append(ts)
-
-                        if len(recent_text_items) == 100:
-                            collected_100 = True
-
-                    # ----------------------------------
-                    # PHASE 2: AFTER 100 (timestamps only)
-                    # ----------------------------------
-                    else:
-                        if ts >= one_week_ago:
-                            full_timestamp_timeline.append(ts)
-                        else:
-                            # Stop everything once we cross 1-week boundary
-                            return full_timestamp_timeline, recent_text_items
-
-                # Pagination: Find 'Next' button
-                next_button = page.locator("span.nextprev a[rel~='next']").first
-                if await next_button.count() == 0:
-                    break
-
-                current_url = await next_button.get_attribute("href")
-
-        except Exception as e:
-            print(f"[ERROR] Scraping failed: {e}")
-        finally:
-            await browser.close()
+        await asyncio.sleep(random.uniform(1.0, 2.0))
 
     return full_timestamp_timeline, recent_text_items
 
+async def _scrape_hybrid_data_async(username: str):
+    await ensure_authenticated_session()
+
+    async with async_playwright() as p:
+        exe = get_chrome_path()
+        launch_kwargs = {"headless": True}
+        if exe:
+            launch_kwargs["executable_path"] = str(exe)
+
+        browser = await p.chromium.launch(**launch_kwargs)
+        context = await browser.new_context(
+            storage_state=str(STATE_FILE),
+            locale="en-US"
+        )
+
+        try:
+            timeline, texts = await _fetch_user_json(context, username)
+            return timeline, texts
+        finally:
+            await browser.close()
 
 def scrape_hybrid_data(username: str):
-    """
-    Synchronous wrapper so existing code can call scrape_hybrid_data(username) normally.
-    """
+    """Synchronous interface matching webScraperfn.py signature."""
     return asyncio.run(_scrape_hybrid_data_async(username))
 
-
-def calculate_rhythmic_features(timestamps):
-    """
-    Calculates features. posting_frequency_days uses the OLD MEDIAN GAP logic.
-    """
-    timestamps.sort()
+def calculate_rhythmic_features(timestamps: list[float]) -> dict:
+    """Exact 6-feature rhythm calculator matching model training inputs."""
+    timestamps = sorted(timestamps)
     total_actions = len(timestamps)
 
     if total_actions == 0:
         return {
             "total_posts": 0,
-            "posting_frequency_days": 0,
-            "median_gap_seconds": 0,
-            "gap_variance": 0,
-            "top_of_hour_ratio": 0,
-            "hour_variance": 0,
-            "avg_sleep_hours": 0,
+            "posting_frequency_days": 0.0,
+            "median_gap_seconds": 0.0,
+            "gap_variance": 0.0,
+            "top_of_hour_ratio": 0.0,
+            "hour_variance": 0.0,
+            "avg_sleep_hours": 0.0,
             "status": "NO DATA"
         }
 
-    raw_gaps = [timestamps[i] - timestamps[i-1] for i in range(1, total_actions)]
+    raw_gaps = [timestamps[i] - timestamps[i - 1] for i in range(1, total_actions)]
     gaps = [g for g in raw_gaps if g < 2592000]
 
-    median_gap_seconds = statistics.median(gaps) if gaps else 0
-    gap_var = statistics.variance(gaps) if len(gaps) > 1 else 0
-
+    median_gap_seconds = statistics.median(gaps) if gaps else 0.0
+    gap_var = statistics.variance(gaps) if len(gaps) > 1 else 0.0
     posting_frequency_days = median_gap_seconds / 86400.0
 
     dt_objects = [datetime.fromtimestamp(ts, tz=timezone.utc) for ts in timestamps]
     hours = [dt.hour for dt in dt_objects]
-    h_var = statistics.variance(hours) if len(hours) > 1 else 0
+    h_var = statistics.variance(hours) if len(hours) > 1 else 0.0
 
     cron_hits = sum(1 for dt in dt_objects if dt.minute in (0, 30))
-    cron_ratio = cron_hits / total_actions if total_actions else 0
+    cron_ratio = cron_hits / total_actions if total_actions else 0.0
 
     daily_gaps = defaultdict(list)
     for i in range(1, total_actions):
         day = dt_objects[i].date()
-        daily_gaps[day].append(raw_gaps[i-1])
+        daily_gaps[day].append(raw_gaps[i - 1])
 
     max_gaps = [max(g) for g in daily_gaps.values()] if daily_gaps else []
-    sleep_hrs = (sum(max_gaps) / len(max_gaps)) / 3600 if max_gaps else 0
+    sleep_hrs = (sum(max_gaps) / len(max_gaps)) / 3600 if max_gaps else 0.0
 
     return {
-        "total_posts": total_actions,
-        "posting_frequency_days": round(posting_frequency_days, 6),
-        "median_gap_seconds": round(median_gap_seconds, 2),
-        "gap_variance": round(gap_var, 2),
-        "top_of_hour_ratio": round(cron_ratio, 4),
-        "hour_variance": round(h_var, 2),
-        "avg_sleep_hours": round(sleep_hrs, 2)
+        "total_posts": int(total_actions),
+        "posting_frequency_days": round(float(posting_frequency_days), 6),
+        "median_gap_seconds": round(float(median_gap_seconds), 2),
+        "gap_variance": round(float(gap_var), 2),
+        "top_of_hour_ratio": round(float(cron_ratio), 4),
+        "hour_variance": round(float(h_var), 2),
+        "avg_sleep_hours": round(float(sleep_hrs), 2)
     }
-
 
 if __name__ == "__main__":
-    target_user = "AutoModerator"
-
-    times, texts = scrape_hybrid_data(target_user)
-    rhythm_features = calculate_rhythmic_features(times)
-
-    final_output = {
-        "username": target_user,
-        "rhythm_features_7_day_basis": rhythm_features,
-        "recent_100_messages": texts,
-        "full_timestamp_timeline": times
-    }
-
-    filename = f"reddit_user_{target_user}_hybrid.json"
-
-    with open(filename, "w", encoding="utf-8") as f:
-        json.dump(final_output, f, indent=2)
-
-    print(f"\n Analysis Complete for /u/{target_user}")
-    print(f" Total Posts (Week): {rhythm_features.get('total_posts', 0)}")
-    print(f" Original Frequency Metric: {rhythm_features.get('posting_frequency_days', 0)}")
-    print(f" Data saved to {filename}")
+    target = sys.argv[1] if len(sys.argv) > 1 else "AutoModerator"
+    times, texts = scrape_hybrid_data(target)
+    feats = calculate_rhythmic_features(times)
+    print(f"\n[+] Results for u/{target}:")
+    print(f"    Total posts in 7d window: {len(times)}")
+    print(f"    Recent messages collected: {len(texts)}")
+    print(f"    Top of hour ratio: {feats['top_of_hour_ratio']}")
+    print(f"    Avg sleep hours: {feats['avg_sleep_hours']}")
