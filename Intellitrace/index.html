@@ -1,303 +1,1689 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light" data-platform="reddit">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IntelliTrace — AI Bot Detection Dashboard</title>
+  <title>IntelliTrace — Social Bot Detection &amp; Intelligence</title>
 
-  <!-- Typography -->
+  <!-- Typography: Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet" />
 
   <!-- Core Stylesheet -->
   <link rel="stylesheet" href="styles.css" />
+
+  <!-- Bundled Local Chart.js (100% Offline) -->
+  <script src="assets/vendor/chart.umd.min.js"></script>
 </head>
-<body>
+<body data-platform="reddit">
 
-  <!-- ── APPLICATION WINDOW HEADER ────────────────────────────────────── -->
-  <header id="topbar" class="app-header" aria-label="Application Top Bar">
-    <div class="app-header__brand">
-      <span class="status-indicator status-indicator--online" aria-hidden="true"></span>
-      <h1 class="brand-name">IntelliTrace</h1>
-      <span class="brand-version">v2.4.0</span>
-    </div>
+  <!-- ── 1. UNIFIED DESKTOP HEADER & NAVIGATION (ONE STICKY BAR) ────────── -->
+  <header id="custom-titlebar" class="unified-header" aria-label="Desktop Window &amp; Navigation">
+    <div class="header-drag-layer"></div>
 
-    <div class="app-header__controls">
-      <div class="control-group">
+    <div class="header-inner">
+      <!-- Left: Logo + Wordmark -->
+      <a href="#/" class="header-brand" id="brand-home-link" aria-label="IntelliTrace Home">
+        <span class="brand-monogram">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="m4.93 4.93 4.24 4.24"/>
+            <path d="m14.83 9.17 4.24-4.24"/>
+            <path d="m14.83 14.83 4.24 4.24"/>
+            <path d="m9.17 14.83-4.24 4.24"/>
+            <circle cx="12" cy="12" r="2.5" fill="currentColor"/>
+          </svg>
+        </span>
+        <span class="brand-name">IntelliTrace</span>
+      </a>
+
+      <!-- Center: Marketing Navigation Links (Visible on Landing Page) -->
+      <nav class="header-nav-links" id="header-nav-marketing" aria-label="Marketing Sections">
+        <a href="#hero" class="header-nav-item active" id="nav-link-landing">Overview</a>
+        <a href="#features" class="header-nav-item" id="nav-link-features">Product</a>
+        <a href="#platforms" class="header-nav-item" id="nav-link-platforms">Platforms</a>
+        <a href="#how-it-works" class="header-nav-item" id="nav-link-how">How it works</a>
+        <a href="#interactive-demo" class="header-nav-item" id="nav-link-demo">Demo</a>
+        <a href="#faq" class="header-nav-item" id="nav-link-faq">FAQ</a>
+      </nav>
+
+      <!-- Center: Dashboard Navigation (Visible on Dashboard) -->
+      <nav class="header-dash-nav hidden" id="header-nav-dashboard" aria-label="Dashboard Platform Navigation">
+        <a href="#/" class="dash-home-btn" id="dash-nav-home" title="Return to Home Landing Page">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+          </svg>
+          <span>Home</span>
+        </a>
+      </nav>
+
+      <!-- Right: Theme Toggle + Platform CTAs + Window Chrome -->
+      <div class="header-actions">
         <!-- Theme Toggle -->
-        <button id="theme-toggle" class="btn-icon" title="Toggle Interface Theme" aria-label="Toggle Color Theme">
-          <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <button id="theme-toggle" class="header-icon-btn" title="Toggle Light/Dark Theme" aria-label="Toggle Color Theme">
+          <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
           </svg>
-          <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
           </svg>
         </button>
 
-        <!-- Settings Toggle -->
-        <button id="settings-toggle" class="btn-icon" title="API Configuration" aria-label="Open Settings">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+        <!-- Secondary CTA: Open Bluesky -->
+        <button id="nav-btn-bluesky" class="header-btn-secondary" title="Open Bluesky Forensics (Ctrl+2)" aria-label="Open Bluesky">
+          <svg class="btn-svg-brand svg-bluesky" viewBox="0 0 568 501" width="16" height="16" fill="currentColor">
+            <path d="M123.12 215.17C177.34 250.77 236.42 278.41 284 316.5C331.58 278.41 390.66 250.77 444.88 215.17C487.62 187.12 516.48 141.24 516.48 93.68C516.48 39.88 471.65 0 415.93 0C373.18 0 335.79 23.95 315.68 59.45C305.62 77.21 294.69 96.88 284 116.89C273.31 96.88 262.38 77.21 252.32 59.45C232.21 23.95 194.82 0 152.07 0C96.35 0 51.52 39.88 51.52 93.68C51.52 141.24 80.38 187.12 123.12 215.17Z M284 340.5C252.12 298.54 186.08 212.18 107.02 212.18C44.75 212.18 0 260.67 0 327.42C0 393.9 49.33 460.7 131.63 487.89C190.71 507.41 247.92 487.89 284 456.66C320.08 487.89 377.29 507.41 436.37 487.89C518.67 460.7 568 393.9 568 327.42C568 260.67 523.25 212.18 460.98 212.18C381.92 212.18 315.88 298.54 284 340.5Z"/>
           </svg>
+          <span>Open Bluesky</span>
         </button>
-      </div>
 
-      <div class="app-header__divider"></div>
+        <!-- Primary CTA: Open Reddit -->
+        <button id="nav-btn-reddit" class="header-btn-primary" title="Open Reddit Forensics (Ctrl+1)" aria-label="Open Reddit">
+          <svg class="btn-svg-brand svg-reddit" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+            <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.612a1.24 1.24 0 0 1 1.108-.696zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/>
+          </svg>
+          <span>Open Reddit</span>
+        </button>
 
-      <!-- Native OS Window Controls -->
-      <div class="control-group window-controls">
-        <button class="btn-window" title="Minimize" aria-label="Minimize" onclick="electronAPI.minimize()">
-          <svg width="10" height="10" viewBox="0 0 10 2"><line x1="0" y1="1" x2="10" y2="1" stroke="currentColor" stroke-width="1.5"/></svg>
-        </button>
-        <button class="btn-window" title="Maximize" aria-label="Maximize" onclick="electronAPI.maximize()">
-          <svg width="10" height="10" viewBox="0 0 10 10"><rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
-        </button>
-        <button class="btn-window btn-window--close" title="Close" aria-label="Close" onclick="electronAPI.close()">
-          <svg width="10" height="10" viewBox="0 0 10 10"><line x1="1" y1="1" x2="9" y2="9" stroke="currentColor" stroke-width="1.5"/><line x1="9" y1="1" x2="1" y2="9" stroke="currentColor" stroke-width="1.5"/></svg>
-        </button>
+        <div class="header-vdivider"></div>
+
+        <!-- Window Controls -->
+        <div class="header-win-controls">
+          <button id="btn-win-min" class="win-btn" title="Minimize" aria-label="Minimize">
+            <svg width="10" height="2" viewBox="0 0 10 2"><line x1="0" y1="1" x2="10" y2="1" stroke="currentColor" stroke-width="1.5"/></svg>
+          </button>
+          <button id="btn-win-max" class="win-btn" title="Maximize" aria-label="Maximize">
+            <svg width="10" height="10" viewBox="0 0 10 10"><rect x="1" y="1" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+          </button>
+          <button id="btn-win-close" class="win-btn win-btn-close" title="Close" aria-label="Close">
+            <svg width="10" height="10" viewBox="0 0 10 10"><line x1="1" y1="1" x2="9" y2="9" stroke="currentColor" stroke-width="1.5"/><line x1="9" y1="1" x2="1" y2="9" stroke="currentColor" stroke-width="1.5"/></svg>
+          </button>
+        </div>
       </div>
     </div>
   </header>
 
-  <!-- ── MAIN APPLICATION VIEWPORT ────────────────────────────────────── -->
-  <main id="app" class="app-content">
+  <!-- ── 2. MAIN APPLICATION CONTAINER ────────────────────────────────── -->
+  <div id="app-viewport" class="app-viewport">
 
-    <!-- ── VIEW 1: LANDING DASHBOARD ────────────────────────────────── -->
-    <section id="view-ready" class="view view--centered active" aria-label="Home Dashboard">
-      <div class="hero-layout">
-        
-        <header class="hero-header">
-          <div class="tag-badge">
-            <span class="tag-badge__dot"></span>
-            <span class="tag-badge__label">HYBRID MULTIMODAL ARCHITECTURE</span>
-          </div>
-          <h2 class="hero-title">
-            Scial Media Bot Detection<br />
-            <span class="text-highlight">Evidence-Driven Analysis</span>
-          </h2>
-          <p class="hero-description">
-            Advanced forensic account inspection utilizing Gemini 2.5 Flash semantic modeling combined with XGBoost behavioral cadence algorithms.
-          </p>
-        </header>
+    <!-- ═════════════════════════════════════════════════════════════════ -->
+    <!-- VIEW 1: SAAS MARKETING LANDING PAGE (#/)                          -->
+    <!-- ═════════════════════════════════════════════════════════════════ -->
+    <main id="view-landing" class="view-landing-page active" aria-label="IntelliTrace Product Overview">
 
-        <!-- Search Input -->
-        <div id="search-bar" class="search-module">
-          <div class="input-wrapper">
-            <div class="input-prefix">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
-              <span class="prefix-text">@ / u/</span>
-            </div>
-            <input 
-              id="username-input" 
-              class="target-input" 
-              type="text" 
-              placeholder="Username or handle.bsky.social..." 
-              autocomplete="off" 
-              spellcheck="false" 
-              aria-label="Account Username or Handle"
-            />
-          </div>
-          <button id="scan-btn" class="btn-primary" type="button">
-            <span id="scan-btn-text">Execute Analysis</span>
-            <svg id="scan-spinner" class="spinner-icon hidden" width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" stroke-dasharray="20 37" stroke-linecap="round"/>
+      <!-- ── SECTION 1: HERO ─────────────────────────────────────────── -->
+      <section id="hero" class="lp-section lp-hero-section">
+        <div class="hero-grid-bg"></div>
+        <div class="hero-glow-orb"></div>
+
+        <div class="lp-container hero-inner">
+          <!-- Announcement Pill -->
+          <a href="#interactive-demo" class="hero-announcement-pill">
+            <span class="pill-badge">4 forensic models</span>
+            <span class="pill-label">2 platforms. One verdict.</span>
+            <svg class="lucide-icon lucide-arrow-right" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
             </svg>
-          </button>
-        </div>
+          </a>
 
-        <!-- Capability Matrix -->
-        <nav class="feature-grid" aria-label="Analysis Capabilities">
-          <div class="feature-card">
-            <h3 class="feature-card__title">Ideology Mapping</h3>
-            <p class="feature-card__desc">Semantic coherence & position tracking</p>
-          </div>
-          <div class="feature-card">
-            <h3 class="feature-card__title">AI Authenticity</h3>
-            <p class="feature-card__desc">LLM syntax & structural markers</p>
-          </div>
-          <div class="feature-card">
-            <h3 class="feature-card__title">Posting Cadence</h3>
-            <p class="feature-card__desc">Frequency variance & density profiling</p>
-          </div>
-          <div class="feature-card">
-            <h3 class="feature-card__title">Behavioral Rhythm</h3>
-            <p class="feature-card__desc">Circadian gap & consistency telemetry</p>
-          </div>
-        </nav>
+          <!-- H1 Headline -->
+          <h1 class="hero-h1">
+            Detect bots. <span class="brand-gradient-text">Understand why.</span>
+          </h1>
 
-      </div>
-    </section>
+          <!-- 2-line Subheading -->
+          <p class="hero-lead-text">
+            Enterprise-grade forensic account inspection. Scrape profiles, extract behavioral telemetry, and expose coordinated inauthenticity in seconds.
+          </p>
 
-    <!-- ── VIEW 2: PIPELINE TELEMETRY ───────────────────────────────── -->
-    <section id="view-scanning" class="view" aria-label="Active Telemetry Pipeline">
-      <div class="dashboard-layout">
-        
-        <!-- Pipeline Header -->
-        <header class="panel-header">
-          <div class="panel-header__left">
-            <button id="scan-back" class="btn-icon btn-icon--subtle" title="Abort & Return" aria-label="Return to search" disabled>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          <!-- Dual CTAs -->
+          <div class="hero-cta-group">
+            <button id="hero-btn-reddit" class="btn-primary-gradient">
+              <svg class="btn-svg-brand svg-reddit" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.612a1.24 1.24 0 0 1 1.108-.696zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/>
+              </svg>
+              <span>Open Reddit</span>
+              <svg class="lucide-icon lucide-arrow-right" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+              </svg>
             </button>
-            <div class="telemetry-status">
-              <span class="status-indicator status-indicator--pulse"></span>
-              <span class="telemetry-label">Active Telemetry Target: <strong id="scanning-username" class="target-name">u/--</strong></span>
-            </div>
-          </div>
-          <div class="panel-header__right">
-            <span class="system-tag">ENGINE PIPELINE RUNNING</span>
-          </div>
-        </header>
 
-        <!-- Stepper Component -->
-        <div id="stepper" class="stepper-component">
-          <div class="step" data-step="scraping">
-            <div class="step__indicator">
-              <span class="step__number">01</span>
-              <svg class="step__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-            <span class="step__label">Data Collection</span>
+            <button id="hero-btn-bluesky" class="btn-secondary-surface">
+              <svg class="btn-svg-brand svg-bluesky" viewBox="0 0 568 501" width="18" height="18" fill="currentColor">
+                <path d="M123.12 215.17C177.34 250.77 236.42 278.41 284 316.5C331.58 278.41 390.66 250.77 444.88 215.17C487.62 187.12 516.48 141.24 516.48 93.68C516.48 39.88 471.65 0 415.93 0C373.18 0 335.79 23.95 315.68 59.45C305.62 77.21 294.69 96.88 284 116.89C273.31 96.88 262.38 77.21 252.32 59.45C232.21 23.95 194.82 0 152.07 0C96.35 0 51.52 39.88 51.52 93.68C51.52 141.24 80.38 187.12 123.12 215.17Z M284 340.5C252.12 298.54 186.08 212.18 107.02 212.18C44.75 212.18 0 260.67 0 327.42C0 393.9 49.33 460.7 131.63 487.89C190.71 507.41 247.92 487.89 284 456.66C320.08 487.89 377.29 507.41 436.37 487.89C518.67 460.7 568 393.9 568 327.42C568 260.67 523.25 212.18 460.98 212.18C381.92 212.18 315.88 298.54 284 340.5Z"/>
+              </svg>
+              <span>Open Bluesky</span>
+            </button>
           </div>
-          <!-- NextElementSibling required by renderer.js -->
-          <div class="step-connector"></div>
-          
-          <div class="step" data-step="ideology">
-            <div class="step__indicator">
-              <span class="step__number">02</span>
-              <svg class="step__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-            <span class="step__label">Ideology Analysis</span>
-          </div>
-          <div class="step-connector"></div>
 
-          <div class="step" data-step="aigen">
-            <div class="step__indicator">
-              <span class="step__number">03</span>
-              <svg class="step__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-            <span class="step__label">AI Text Gen</span>
-          </div>
-          <div class="step-connector"></div>
+          <p class="hero-privacy-note">
+            <svg class="lucide-icon lucide-shield" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <span>Runs locally. Your data stays on your machine.</span>
+          </p>
 
-          <div class="step" data-step="frequency">
-            <div class="step__indicator">
-              <span class="step__number">04</span>
-              <svg class="step__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-            <span class="step__label">Posting Cadence</span>
-          </div>
-          <div class="step-connector"></div>
+          <!-- Large Product Screenshot Mockup Frame (Real HTML/CSS) -->
+          <div class="hero-mockup-viewport">
+            <div class="mockup-window-frame">
+              <!-- Window Titlebar with Mascots at Corners -->
+              <div class="mockup-frame-bar">
+                <div class="mockup-traffic-lights">
+                  <span class="light light-red"></span>
+                  <span class="light light-yellow"></span>
+                  <span class="light light-green"></span>
+                </div>
+                <div class="mockup-url-pill">
+                  <svg class="lucide-icon lucide-shield" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  </svg>
+                  <span>intellitrace://forensics/consensus</span>
+                </div>
+                <div class="mockup-mascots-corner">
+                  <img src="assets/mascots/snoo.gif" alt="Snoo" class="mockup-mascot-snoo" />
+                  <img src="assets/mascots/bluesky.gif" alt="Bluesky" class="mockup-mascot-butterfly" />
+                </div>
+              </div>
 
-          <div class="step" data-step="rhythm">
-            <div class="step__indicator">
-              <span class="step__number">05</span>
-              <svg class="step__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <!-- Real HTML/CSS Dashboard Content Preview -->
+              <div class="mockup-dashboard-canvas">
+                <!-- Consensus Gauge Card -->
+                <div class="mockup-panel mockup-gauge-panel">
+                  <div class="mockup-panel-title">CONSENSUS VERDICT</div>
+                  <div class="mockup-dial-wrap">
+                    <svg class="mockup-gauge-svg" viewBox="0 0 200 110" width="180" height="98">
+                      <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="var(--lp-card-border)" stroke-width="12" stroke-linecap="round"/>
+                      <path d="M 20 100 A 80 80 0 0 1 45 45" fill="none" stroke="#10B981" stroke-width="12" stroke-linecap="round"/>
+                    </svg>
+                    <div class="mockup-gauge-metric">
+                      <span class="metric-num">12%</span>
+                      <span class="metric-badge badge-human">Likely Human</span>
+                    </div>
+                  </div>
+                  <p class="mockup-gauge-desc">Linguistic entropy &amp; 8h sleep intervals align with human discourse.</p>
+                </div>
+
+                <!-- Center: High-Res Radar Canvas -->
+                <div class="mockup-panel mockup-radar-panel">
+                  <div class="mockup-panel-title">4-AXIS RADAR SIGNATURE</div>
+                  <div class="mockup-radar-container">
+                    <canvas id="landing-hero-radar" width="320" height="230"></canvas>
+                  </div>
+                </div>
+
+                <!-- Right: 4 Score Cards -->
+                <div class="mockup-panel mockup-scores-panel">
+                  <div class="mockup-panel-title">MODEL SCORES</div>
+                  <div class="mockup-scores-list">
+                    <div class="m-score-row">
+                      <span class="m-score-label">Semantic Intent</span>
+                      <strong class="m-score-val">8%</strong>
+                      <div class="m-score-track"><span class="m-score-bar" style="width: 8%;"></span></div>
+                    </div>
+                    <div class="m-score-row">
+                      <span class="m-score-label">Text Authenticity</span>
+                      <strong class="m-score-val">10%</strong>
+                      <div class="m-score-track"><span class="m-score-bar" style="width: 10%;"></span></div>
+                    </div>
+                    <div class="m-score-row">
+                      <span class="m-score-label">Posting Cadence</span>
+                      <strong class="m-score-val">14%</strong>
+                      <div class="m-score-track"><span class="m-score-bar" style="width: 14%;"></span></div>
+                    </div>
+                    <div class="m-score-row">
+                      <span class="m-score-label">Circadian Rhythm</span>
+                      <strong class="m-score-val">16%</strong>
+                      <div class="m-score-track"><span class="m-score-bar" style="width: 16%;"></span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <span class="step__label">Behavioral Rhythm</span>
+            <!-- Bottom Fade Gradient -->
+            <div class="mockup-bottom-fade"></div>
           </div>
         </div>
+      </section>
 
-        <!-- Terminal Component -->
-        <article id="terminal-card" class="terminal-module">
-          <header class="terminal-module__header">
-            <div class="terminal-controls">
-              <span class="control-dot"></span>
-              <span class="control-dot"></span>
-              <span class="control-dot"></span>
+      <!-- ── SECTION 2: "BUILT ON" TRUST STRIP ───────────────────────── -->
+      <section id="trusted-by" class="lp-section lp-trust-section">
+        <div class="lp-container">
+          <p class="trust-caption">POWERED BY OPEN PROTOCOLS &amp; LOCAL ML</p>
+          <div class="trust-logos-row">
+            <!-- Reddit -->
+            <div class="trust-item" title="Reddit Platform API">
+              <svg class="trust-svg svg-reddit" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.612a1.24 1.24 0 0 1 1.108-.696zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/>
+              </svg>
+              <span class="trust-name">Reddit</span>
             </div>
-            <h4 class="terminal-title">FORENSIC EXECUTION LOG // IPC PROCESS OUTPUT</h4>
-            <button id="terminal-toggle" class="btn-icon btn-icon--subtle terminal-collapse-btn" title="Toggle Terminal" aria-label="Toggle Terminal Visibility">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-            </button>
-          </header>
-          <div id="log-panel" class="terminal-module__viewport">
-            <!-- Dynamic Logs Injected Here by renderer.js -->
+
+            <!-- Bluesky / AT Protocol -->
+            <div class="trust-item" title="Bluesky AT Protocol">
+              <svg class="trust-svg svg-bluesky" viewBox="0 0 568 501" width="22" height="22" fill="currentColor">
+                <path d="M123.12 215.17C177.34 250.77 236.42 278.41 284 316.5C331.58 278.41 390.66 250.77 444.88 215.17C487.62 187.12 516.48 141.24 516.48 93.68C516.48 39.88 471.65 0 415.93 0C373.18 0 335.79 23.95 315.68 59.45C305.62 77.21 294.69 96.88 284 116.89C273.31 96.88 262.38 77.21 252.32 59.45C232.21 23.95 194.82 0 152.07 0C96.35 0 51.52 39.88 51.52 93.68C51.52 141.24 80.38 187.12 123.12 215.17Z M284 340.5C252.12 298.54 186.08 212.18 107.02 212.18C44.75 212.18 0 260.67 0 327.42C0 393.9 49.33 460.7 131.63 487.89C190.71 507.41 247.92 487.89 284 456.66C320.08 487.89 377.29 507.41 436.37 487.89C518.67 460.7 568 393.9 568 327.42C568 260.67 523.25 212.18 460.98 212.18C381.92 212.18 315.88 298.54 284 340.5Z"/>
+              </svg>
+              <span class="trust-name">AT Protocol</span>
+            </div>
+
+            <!-- Gemini -->
+            <div class="trust-item" title="Google Gemini LLM Intelligence">
+              <svg class="trust-svg svg-gemini" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/>
+              </svg>
+              <span class="trust-name">Google Gemini</span>
+            </div>
+
+            <!-- XGBoost -->
+            <div class="trust-item" title="XGBoost Classifier">
+              <svg class="trust-svg svg-xgboost" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                <polyline points="2 17 12 22 22 17"/>
+                <polyline points="2 12 12 17 22 12"/>
+              </svg>
+              <span class="trust-name">XGBoost ML</span>
+            </div>
+
+            <!-- Playwright -->
+            <div class="trust-item" title="Playwright Headless Automation">
+              <svg class="trust-svg svg-playwright" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+              </svg>
+              <span class="trust-name">Playwright</span>
+            </div>
+
+            <!-- Electron -->
+            <div class="trust-item" title="Electron Desktop Architecture">
+              <svg class="trust-svg svg-electron" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/>
+                <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(30 12 12)"/>
+                <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-30 12 12)"/>
+              </svg>
+              <span class="trust-name">Electron</span>
+            </div>
           </div>
-        </article>
+        </div>
+      </section>
 
-      </div>
-    </section>
-
-    <!-- ── VIEW 3: RESULTS DASHBOARD ────────────────────────────────── -->
-    <section id="view-results" class="view" aria-label="Final Analysis Report">
-      <div class="dashboard-layout results-layout">
-        
-        <!-- Report Header -->
-        <header class="panel-header">
-          <div class="panel-header__left">
-            <span class="system-tag system-tag--solid">FINAL REPORT // HYBRID VERDICT</span>
+      <!-- ── SECTION 3: 4 FEATURE ROWS (ALTERNATING SIDES) ───────────── -->
+      <section id="features" class="lp-section lp-features-section">
+        <div class="lp-container">
+          <div class="section-heading-wrap">
+            <span class="section-tag-pill">MULTI-AXIS TELEMETRY</span>
+            <h2 class="section-h2">Four Specialized Forensic Parameters</h2>
+            <p class="section-lead">No single metric decides a verdict. Each parameter evaluates independent behavioral traits to eliminate false positives.</p>
           </div>
-          <div class="panel-header__right">
-            <span class="meta-tag">INSPECTED VIA SEMANTIC & BEHAVIORAL ENSEMBLE</span>
+
+          <div class="feature-rows-wrap">
+            <!-- Row 1: Semantic Coherence (Text Left, Chart Right) -->
+            <div class="feature-row feature-row-normal">
+              <div class="feature-row-copy">
+                <span class="feature-row-tag tag-semantic">PARAMETER 01</span>
+                <h3 class="feature-row-title">Semantic Coherence &amp; Ideology</h3>
+                <p class="feature-row-desc">
+                  Evaluates narrative variety, ideological repetition, and repetitive script pushing across a user's entire published post and comment corpus.
+                </p>
+                <ul class="feature-check-list">
+                  <li>
+                    <svg class="lucide-icon lucide-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span>Extracts lexical topic entropy across message history</span>
+                  </li>
+                  <li>
+                    <svg class="lucide-icon lucide-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span>Identifies verbatim copy-paste spam and script signatures</span>
+                  </li>
+                  <li>
+                    <svg class="lucide-icon lucide-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span>Flags coordinated astroturf sentiment clustering</span>
+                  </li>
+                </ul>
+                <a href="#interactive-demo" class="feature-link">
+                  <span>Explore semantic logic</span>
+                  <svg class="lucide-icon lucide-arrow-right" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </a>
+              </div>
+              <div class="feature-row-visual">
+                <div class="feature-chart-card">
+                  <div class="f-card-header">
+                    <span class="f-card-title">Topic Classification Donut</span>
+                    <span class="f-card-badge">Semantic Distribution</span>
+                  </div>
+                  <div class="f-donut-container">
+                    <canvas id="landing-donut-semantic" width="220" height="220"></canvas>
+                  </div>
+                  <div class="f-chips-row">
+                    <span class="f-chip chip-low">Agenda Repetition: 8% (Low)</span>
+                    <span class="f-chip chip-high">Narrative Entropy: 92% (High)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Row 2: Text Authenticity (Chart Left, Text Right - Alternated) -->
+            <div class="feature-row feature-row-reverse">
+              <div class="feature-row-visual">
+                <div class="feature-chart-card">
+                  <div class="f-card-header">
+                    <span class="f-card-title">LLM Hallmarks Gauge</span>
+                    <span class="f-card-badge badge-amber">Syntax Authenticity</span>
+                  </div>
+                  <div class="f-gauge-container">
+                    <canvas id="landing-gauge-authenticity" width="260" height="140"></canvas>
+                  </div>
+                  <div class="f-hallmarks-list">
+                    <div class="hallmark-item verified">
+                      <svg class="lucide-icon lucide-check" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                      <span>Natural casual slang &amp; typographical variance</span>
+                    </div>
+                    <div class="hallmark-item verified">
+                      <svg class="lucide-icon lucide-check" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                      <span>Absence of formulaic AI transitions ("Furthermore")</span>
+                    </div>
+                    <div class="hallmark-item verified">
+                      <svg class="lucide-icon lucide-check" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                      <span>Dynamic organic emotional cadence</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="feature-row-copy">
+                <span class="feature-row-tag tag-authenticity">PARAMETER 02</span>
+                <h3 class="feature-row-title">Text Authenticity &amp; LLM Signatures</h3>
+                <p class="feature-row-desc">
+                  Inspects structural and syntactic markers typical of Large Language Models (ChatGPT, Claude, Llama), formulaic transitions, and robotic agreeable tone.
+                </p>
+                <ul class="feature-check-list">
+                  <li>
+                    <svg class="lucide-icon lucide-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span>Zero-shot prompt signature detection for synthetic text</span>
+                  </li>
+                  <li>
+                    <svg class="lucide-icon lucide-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span>Measures perplexity collapse and repetitive clause structures</span>
+                  </li>
+                  <li>
+                    <svg class="lucide-icon lucide-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span>Discriminates casual conversational slang from synthetic prose</span>
+                  </li>
+                </ul>
+                <a href="#interactive-demo" class="feature-link">
+                  <span>Explore authenticity logic</span>
+                  <svg class="lucide-icon lucide-arrow-right" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </a>
+              </div>
+            </div>
+
+            <!-- Row 3: Posting Cadence (Text Left, Chart Right) -->
+            <div class="feature-row feature-row-normal">
+              <div class="feature-row-copy">
+                <span class="feature-row-tag tag-cadence">PARAMETER 03</span>
+                <h3 class="feature-row-title">Posting Cadence &amp; Velocity Limits</h3>
+                <p class="feature-row-desc">
+                  Benchmarks inter-post time intervals against human biological typing and reading limits. Machine burst scripts and automated relays stand out instantly.
+                </p>
+                <ul class="feature-check-list">
+                  <li>
+                    <svg class="lucide-icon lucide-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span>Sub-minute burst velocity monitoring across threads</span>
+                  </li>
+                  <li>
+                    <svg class="lucide-icon lucide-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span>Logarithmic time-gap variance comparison (10^11 scale)</span>
+                  </li>
+                  <li>
+                    <svg class="lucide-icon lucide-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span>Trained XGBoost classifier for cadence probability</span>
+                  </li>
+                </ul>
+                <a href="#interactive-demo" class="feature-link">
+                  <span>Explore cadence telemetry</span>
+                  <svg class="lucide-icon lucide-arrow-right" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </a>
+              </div>
+              <div class="feature-row-visual">
+                <div class="feature-chart-card">
+                  <div class="f-card-header">
+                    <span class="f-card-title">Inter-Action Velocity Benchmark</span>
+                    <span class="f-card-badge badge-blue">Cadence Zones</span>
+                  </div>
+                  <div class="f-bullet-container">
+                    <canvas id="landing-bullet-cadence" width="300" height="120"></canvas>
+                  </div>
+                  <div class="f-cadence-stats-grid">
+                    <div class="c-stat-box">
+                      <span class="c-stat-label">Observed Gap</span>
+                      <strong class="c-stat-val">3.33 days</strong>
+                    </div>
+                    <div class="c-stat-box">
+                      <span class="c-stat-label">Velocity Classification</span>
+                      <strong class="c-stat-val text-green">Casual Human</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Row 4: Behavioral Rhythm (Chart Left, Text Right - Alternated) -->
+            <div class="feature-row feature-row-reverse">
+              <div class="feature-row-visual">
+                <div class="feature-chart-card">
+                  <div class="f-card-header">
+                    <span class="f-card-title">24-Hour Circadian Histogram</span>
+                    <span class="f-card-badge badge-purple">Temporal Rhythm</span>
+                  </div>
+                  <div class="f-hist-container">
+                    <canvas id="landing-bar-circadian" width="300" height="150"></canvas>
+                  </div>
+                  <div class="f-rhythm-meters">
+                    <div class="r-meter-item">
+                      <span class="r-meter-label">Top-of-Hour Cron Ratio (:00)</span>
+                      <strong class="r-meter-val">2.1%</strong>
+                      <span class="r-meter-badge text-green">Normal Organic</span>
+                    </div>
+                    <div class="r-meter-item">
+                      <span class="r-meter-label">Longest Inactivity Gap</span>
+                      <strong class="r-meter-val">37.3 days</strong>
+                      <span class="r-meter-badge">Dormancy Window</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="feature-row-copy">
+                <span class="feature-row-tag tag-rhythm">PARAMETER 04</span>
+                <h3 class="feature-row-title">Behavioral Circadian Rhythm</h3>
+                <p class="feature-row-desc">
+                  Humans sleep; automated cron jobs post around the clock. IntelliTrace plots 24-hour UTC activity distributions and top-of-the-hour alignment markers.
+                </p>
+                <ul class="feature-check-list">
+                  <li>
+                    <svg class="lucide-icon lucide-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span>24-hour UTC circadian activity distribution histograms</span>
+                  </li>
+                  <li>
+                    <svg class="lucide-icon lucide-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span>Detects top-of-hour cron markers (:00 &amp; :30 scheduled tasks)</span>
+                  </li>
+                  <li>
+                    <svg class="lucide-icon lucide-check" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span>Quantifies biological sleep gaps and multi-day dormancy</span>
+                  </li>
+                </ul>
+                <a href="#interactive-demo" class="feature-link">
+                  <span>Explore circadian logic</span>
+                  <svg class="lucide-icon lucide-arrow-right" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </a>
+              </div>
+            </div>
           </div>
-        </header>
+        </div>
+      </section>
 
-        <!-- Renderer dynamically injects `.verdict` banner and `.analysis-grid` here -->
-        <div id="result-panel" class="results-container"></div>
+      <!-- ── SECTION 4: BENTO GRID ───────────────────────────────────── -->
+      <section id="bento" class="lp-section lp-bento-section">
+        <div class="lp-container">
+          <div class="section-heading-wrap">
+            <span class="section-tag-pill">DEEP FORENSICS</span>
+            <h2 class="section-h2">Everything You Need to Investigate an Account</h2>
+            <p class="section-lead">Engineered as a high-density desktop investigation workstation with zero friction.</p>
+          </div>
 
-        <!-- Static Summary & Disclaimers -->
-        <aside class="report-summary">
-          <header class="report-summary__header">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-            <h4 class="summary-title">INTELLITRACE FORENSIC SUMMARY NOTES</h4>
-          </header>
-          <div class="report-summary__content">
-            <p class="disclaimer-text">
-              Confidence percentages are computed independently across four isolated assessment layers. Overall verdict reflects weighted heuristic consensus between semantic modeling and cadence telemetry. False positives may occur; human verification is recommended for definitive action.
+          <div class="bento-grid">
+            <!-- Bento Tile 1: 2 Columns Wide (Weighted Verdict) -->
+            <div class="bento-tile bento-tile-wide">
+              <div class="bento-tile-header">
+                <div class="bento-icon-frame">
+                  <svg class="lucide-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><circle cx="12" cy="12" r="3" fill="currentColor"/>
+                  </svg>
+                </div>
+                <span class="bento-badge">EXPLAINABLE CONSENSUS</span>
+              </div>
+              <h3 class="bento-title">Transparent 25% Equal-Weight Consensus</h3>
+              <p class="bento-desc">
+                No black-box scores. Final verdicts synthesize all 4 parameter models with a balanced 0.25 weighting config.
+              </p>
+              <div class="bento-weight-bar">
+                <div class="weight-segment seg-semantic" style="width: 25%;" title="Semantic Intent: 25%">
+                  <span>25% Semantic</span>
+                </div>
+                <div class="weight-segment seg-auth" style="width: 25%;" title="Text Authenticity: 25%">
+                  <span>25% Syntax</span>
+                </div>
+                <div class="weight-segment seg-cadence" style="width: 25%;" title="Posting Cadence: 25%">
+                  <span>25% Cadence</span>
+                </div>
+                <div class="weight-segment seg-rhythm" style="width: 25%;" title="Circadian Rhythm: 25%">
+                  <span>25% Rhythm</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bento Tile 2: 1 Column (Dual Platform) -->
+            <div class="bento-tile">
+              <div class="bento-tile-header">
+                <div class="bento-icon-frame">
+                  <svg class="lucide-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>
+                  </svg>
+                </div>
+              </div>
+              <h3 class="bento-title">Dual Platform Support</h3>
+              <p class="bento-desc">
+                Seamlessly inspect Reddit communities and Bluesky AT Protocol federated networks with dedicated forensic skins.
+              </p>
+              <div class="bento-platforms-visual">
+                <span class="b-pill pill-reddit">Reddit JSON</span>
+                <span class="b-pill pill-bluesky">AT Protocol</span>
+              </div>
+            </div>
+
+            <!-- Bento Tile 3: 1 Column (Local First & Private) -->
+            <div class="bento-tile">
+              <div class="bento-tile-header">
+                <div class="bento-icon-frame">
+                  <svg class="lucide-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  </svg>
+                </div>
+              </div>
+              <h3 class="bento-title">100% Local-First &amp; Private</h3>
+              <p class="bento-desc">
+                Scraped timelines and computed results live entirely on your local filesystem in <code>UserData/</code>. Zero telemetry.
+              </p>
+              <div class="bento-status-indicator">
+                <span class="status-dot"></span>
+                <span>On-Device Storage Active</span>
+              </div>
+            </div>
+
+            <!-- Bento Tile 4: 1 Column (1-Click Re-Analyze) -->
+            <div class="bento-tile">
+              <div class="bento-tile-header">
+                <div class="bento-icon-frame">
+                  <svg class="lucide-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                  </svg>
+                </div>
+              </div>
+              <h3 class="bento-title">1-Click Re-Analysis</h3>
+              <p class="bento-desc">
+                Re-evaluate cached profiles instantly with updated models or weights without contacting the social platforms again.
+              </p>
+              <div class="bento-speed-chip">
+                <span>⚡ Instant local re-evaluation</span>
+              </div>
+            </div>
+
+            <!-- Bento Tile 5: 1 Column (Desktop Shortcuts) -->
+            <div class="bento-tile">
+              <div class="bento-tile-header">
+                <div class="bento-icon-frame">
+                  <svg class="lucide-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6" y2="8"/><line x1="10" y1="8" x2="10" y2="8"/><line x1="14" y1="8" x2="14" y2="8"/><line x1="18" y1="8" x2="18" y2="8"/><line x1="6" y1="12" x2="6" y2="12"/><line x1="10" y1="12" x2="10" y2="12"/><line x1="14" y1="12" x2="14" y2="12"/><line x1="18" y1="12" x2="18" y2="12"/><line x1="8" y1="16" x2="16" y2="16"/>
+                  </svg>
+                </div>
+              </div>
+              <h3 class="bento-title">Desktop Speed Shortcuts</h3>
+              <p class="bento-desc">
+                Navigate your entire investigation workspace at the speed of thought without taking hands off the keyboard.
+              </p>
+              <div class="bento-keycaps-row">
+                <div class="keycap-item"><kbd>Ctrl+1</kbd><span>Reddit</span></div>
+                <div class="keycap-item"><kbd>Ctrl+2</kbd><span>Bluesky</span></div>
+                <div class="keycap-item"><kbd>Ctrl+K</kbd><span>Search</span></div>
+              </div>
+            </div>
+
+            <!-- Bento Tile 6: 2 Columns Wide (Profile History & Persistence) -->
+            <div class="bento-tile bento-tile-wide">
+              <div class="bento-tile-header">
+                <div class="bento-icon-frame">
+                  <svg class="lucide-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                  </svg>
+                </div>
+                <span class="bento-badge">FS PERSISTENCE</span>
+              </div>
+              <h3 class="bento-title">Saved Profile History &amp; Cache Engine</h3>
+              <p class="bento-desc">
+                Automatically stores raw timeline archives and calculated <code>result_{username}.json</code> files. Switch accounts seamlessly with zero network latency.
+              </p>
+              <div class="bento-cache-preview">
+                <span class="cache-pill"><code>u/Plus-Affect-6365</code> (Cached)</span>
+                <span class="cache-pill"><code>@echo.bsky.social</code> (Cached)</span>
+                <span class="cache-pill">Live file-watcher active</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── SECTION 5: PLATFORMS SECTION ────────────────────────────── -->
+      <section id="platforms" class="lp-section lp-platforms-section">
+        <div class="lp-container">
+          <div class="section-heading-wrap">
+            <span class="section-tag-pill">ENVIRONMENTS</span>
+            <h2 class="section-h2">Two Platforms. Native Forensics.</h2>
+            <p class="section-lead">Each platform features a distinct UI skin, custom color palette, and local mascot.</p>
+          </div>
+
+          <div class="platforms-split-grid">
+            <!-- Reddit Card -->
+            <article id="split-card-reddit" class="platform-entry-card p-card-reddit" tabindex="0" role="button" aria-label="Open Reddit Forensics">
+              <div class="p-card-accent-glow"></div>
+              <div class="p-card-top">
+                <div class="p-mascot-frame">
+                  <img src="assets/mascots/snoo.gif" alt="Reddit Snoo Mascot" class="p-mascot-img" />
+                </div>
+                <span class="p-card-tag tag-reddit">REDDIT INTELLIGENCE</span>
+              </div>
+              <h3 class="p-card-name">Reddit Forensic Suite</h3>
+              <p class="p-card-copy">
+                Examine subreddit discussion engagement, copy-paste ideological narratives, karma-farming rings, and cron-scheduled bot accounts.
+              </p>
+              <div class="p-card-footer">
+                <div class="p-counter-wrap">
+                  <strong class="p-counter-val" id="split-reddit-count">0</strong>
+                  <span class="p-counter-label">Saved Reddit Profiles</span>
+                </div>
+                <span class="p-cta-btn btn-reddit">
+                  <span>Enter Reddit Suite</span>
+                  <svg class="lucide-icon lucide-arrow-right" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </span>
+              </div>
+            </article>
+
+            <!-- Bluesky Card -->
+            <article id="split-card-bluesky" class="platform-entry-card p-card-bluesky" tabindex="0" role="button" aria-label="Open Bluesky Forensics">
+              <div class="p-card-accent-glow"></div>
+              <div class="p-card-top">
+                <div class="p-mascot-frame">
+                  <img src="assets/mascots/bluesky.gif" alt="Bluesky Butterfly Mascot" class="p-mascot-img" />
+                </div>
+                <span class="p-card-tag tag-bluesky">AT PROTOCOL FEEDS</span>
+              </div>
+              <h3 class="p-card-name">Bluesky Forensic Suite</h3>
+              <p class="p-card-copy">
+                Inspect public AT Protocol firehose streams, synthetic repost relay clusters, automated AI broadcasters, and non-stop 24/7 post cadences.
+              </p>
+              <div class="p-card-footer">
+                <div class="p-counter-wrap">
+                  <strong class="p-counter-val" id="split-bluesky-count">0</strong>
+                  <span class="p-counter-label">Saved Bluesky Profiles</span>
+                </div>
+                <span class="p-cta-btn btn-bluesky">
+                  <span>Enter Bluesky Suite</span>
+                  <svg class="lucide-icon lucide-arrow-right" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </span>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── SECTION 6: HOW IT WORKS ─────────────────────────────────── -->
+      <section id="how-it-works" class="lp-section lp-how-section">
+        <div class="lp-container">
+          <div class="section-heading-wrap">
+            <span class="section-tag-pill">ARCHITECTURE</span>
+            <h2 class="section-h2">From Raw Posts to Forensic Verdict</h2>
+            <p class="section-lead">A streamlined 4-step pipeline that transforms raw timeline JSON into explainable intelligence.</p>
+          </div>
+
+          <div class="how-timeline-track">
+            <div class="how-connector-line"></div>
+
+            <div class="how-steps-grid">
+              <!-- Step 1 -->
+              <div class="how-step-card">
+                <div class="how-step-badge">
+                  <span class="how-num">01</span>
+                </div>
+                <div class="how-icon-box">
+                  <svg class="lucide-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+                  </svg>
+                </div>
+                <h4 class="how-step-title">Scrape Profile</h4>
+                <p class="how-step-desc">Headless Playwright or AT Protocol fetches target user's recent 100 posts, timestamps, and comments.</p>
+              </div>
+
+              <!-- Step 2 -->
+              <div class="how-step-card">
+                <div class="how-step-badge">
+                  <span class="how-num">02</span>
+                </div>
+                <div class="how-icon-box">
+                  <svg class="lucide-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                  </svg>
+                </div>
+                <h4 class="how-step-title">Extract Telemetry</h4>
+                <p class="how-step-desc">Raw payload is parsed for circadian hours, inter-action intervals, burst densities, and lexical features.</p>
+              </div>
+
+              <!-- Step 3 -->
+              <div class="how-step-card">
+                <div class="how-step-badge">
+                  <span class="how-num">03</span>
+                </div>
+                <div class="how-icon-box">
+                  <svg class="lucide-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>
+                  </svg>
+                </div>
+                <h4 class="how-step-title">Score 4 Models</h4>
+                <p class="how-step-desc">Independent evaluations run across Semantic Coherence, AI-Gen Text, XGBoost Cadence, and Sleep Cycles.</p>
+              </div>
+
+              <!-- Step 4 -->
+              <div class="how-step-card">
+                <div class="how-step-badge">
+                  <span class="how-num">04</span>
+                </div>
+                <div class="how-icon-box">
+                  <svg class="lucide-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><circle cx="12" cy="12" r="3" fill="currentColor"/>
+                  </svg>
+                </div>
+                <h4 class="how-step-title">Synthesize Verdict</h4>
+                <p class="how-step-desc">Balanced consensus calculates final bot likelihood percentage and generates transparent reasoning.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── SECTION 7: INTERACTIVE DEMO PLAYGROUND ───────────────────── -->
+      <section id="interactive-demo" class="lp-section lp-demo-section">
+        <div class="lp-container">
+          <div class="section-heading-wrap">
+            <span class="section-tag-pill">LIVE PLAYGROUND</span>
+            <h2 class="section-h2">See How IntelliTrace Spots Bot Patterns</h2>
+            <p class="section-lead">Switch profiles to observe how different archetypes reshape the forensic radar and verdict gauge.</p>
+          </div>
+
+          <div class="demo-interactive-card">
+            <!-- Mode Selector Switch -->
+            <div class="demo-tab-switcher" role="tablist">
+              <button id="demo-tab-human" class="demo-tab-btn active" role="tab" aria-selected="true" data-profile="human">
+                <span>Organic Human</span>
+              </button>
+              <button id="demo-tab-hybrid" class="demo-tab-btn" role="tab" aria-selected="false" data-profile="hybrid">
+                <span>Hybrid / Sockpuppet</span>
+              </button>
+              <button id="demo-tab-bot" class="demo-tab-btn" role="tab" aria-selected="false" data-profile="bot">
+                <span>Automated Bot</span>
+              </button>
+            </div>
+
+            <!-- Demo Stage -->
+            <div class="demo-stage-grid">
+              <!-- Left: Radar Visual -->
+              <div class="demo-stage-radar">
+                <div class="stage-card-label">MULTI-AXIS SIGNATURE</div>
+                <div class="demo-canvas-wrap">
+                  <canvas id="landing-demo-radar" width="340" height="300"></canvas>
+                </div>
+              </div>
+
+              <!-- Right: Telemetry & Verdict -->
+              <div class="demo-stage-details">
+                <div class="demo-user-header">
+                  <div>
+                    <h4 class="demo-user-handle" id="demo-user-handle">u/Plus-Affect-6365</h4>
+                    <span class="demo-user-sub" id="demo-user-sub">Casual community discussion account</span>
+                  </div>
+                  <div class="demo-verdict-badge badge-human" id="demo-verdict-badge">Likely Human (12%)</div>
+                </div>
+
+                <!-- 4 Parameter Scores Matrix -->
+                <div class="demo-param-metrics">
+                  <div class="demo-metric-cell">
+                    <span class="d-cell-label">Semantic Intent</span>
+                    <strong class="d-cell-val" id="demo-score-semantic">8%</strong>
+                  </div>
+                  <div class="demo-metric-cell">
+                    <span class="d-cell-label">Text Authenticity</span>
+                    <strong class="d-cell-val" id="demo-score-auth">10%</strong>
+                  </div>
+                  <div class="demo-metric-cell">
+                    <span class="d-cell-label">Posting Cadence</span>
+                    <strong class="d-cell-val" id="demo-score-cadence">14%</strong>
+                  </div>
+                  <div class="demo-metric-cell">
+                    <span class="d-cell-label">Circadian Rhythm</span>
+                    <strong class="d-cell-val" id="demo-score-rhythm">16%</strong>
+                  </div>
+                </div>
+
+                <!-- Key Telemetry Observations -->
+                <div class="demo-observations-box">
+                  <div class="obs-title">FORENSIC OBSERVATIONS</div>
+                  <ul class="obs-list" id="demo-obs-list">
+                    <li>Organic vocabulary entropy across varied subreddits</li>
+                    <li>Casual typos, natural abbreviations, zero academic filler</li>
+                    <li>Human posting cadence with 3.3 days median dormancy</li>
+                    <li>Normal 8-hour human biological sleep window detected</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── SECTION 8: STATS BAND (REAL SYSTEM METRICS) ─────────────── -->
+      <section id="stats" class="lp-section lp-stats-section">
+        <div class="lp-container">
+          <div class="stats-counter-grid">
+            <div class="stat-counter-item">
+              <strong class="stat-big-number" id="stat-count-models">4</strong>
+              <span class="stat-counter-title">Specialized Forensic Models</span>
+              <span class="stat-counter-sub">Semantic, AI-Gen, Cadence, Sleep</span>
+            </div>
+            <div class="stat-counter-item">
+              <strong class="stat-big-number" id="stat-count-platforms">2</strong>
+              <span class="stat-counter-title">Supported Networks</span>
+              <span class="stat-counter-sub">Reddit &amp; Bluesky AT Protocol</span>
+            </div>
+            <div class="stat-counter-item">
+              <strong class="stat-big-number" id="stat-count-storage">100%</strong>
+              <span class="stat-counter-title">Local On-Device Execution</span>
+              <span class="stat-counter-sub">Zero telemetry or cloud tracking</span>
+            </div>
+            <div class="stat-counter-item">
+              <strong class="stat-big-number" id="stat-count-speed">&lt; 1s</strong>
+              <span class="stat-counter-title">Cached Verdict Retrieval</span>
+              <span class="stat-counter-sub">Instant local filesystem queries</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── SECTION 9: ACCURATE FAQ ACCORDION ───────────────────────── -->
+      <section id="faq" class="lp-section lp-faq-section">
+        <div class="lp-container">
+          <div class="section-heading-wrap">
+            <span class="section-tag-pill">QUESTIONS</span>
+            <h2 class="section-h2">Frequently Asked Questions</h2>
+            <p class="section-lead">Everything you need to know about IntelliTrace architecture, privacy, and forensic scoring.</p>
+          </div>
+
+          <div class="faq-accordion-list">
+            <!-- Question 1 -->
+            <details class="faq-item" open>
+              <summary class="faq-question">
+                <span>How is the final consensus verdict calculated?</span>
+                <svg class="lucide-icon lucide-chevron-down" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </summary>
+              <div class="faq-answer">
+                <p>IntelliTrace applies an equal 25% weighted average across 4 models: Semantic Coherence, Text Authenticity, Posting Cadence, and Behavioral Rhythm. Scores below 35% are classified as Likely Human, 35% to 65% as Uncertain, and above 65% as Likely Bot.</p>
+              </div>
+            </details>
+
+            <!-- Question 2 -->
+            <details class="faq-item">
+              <summary class="faq-question">
+                <span>Does IntelliTrace send my data or scraping history anywhere?</span>
+                <svg class="lucide-icon lucide-chevron-down" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </summary>
+              <div class="faq-answer">
+                <p>No. All profile scrapings, post timelines, and computed verdict JSON files are stored locally in the application's <code>UserData/</code> directory. There are zero background trackers, external analytics, or cloud telemetry.</p>
+              </div>
+            </details>
+
+            <!-- Question 3 -->
+            <details class="faq-item">
+              <summary class="faq-question">
+                <span>Which social platforms are supported?</span>
+                <svg class="lucide-icon lucide-chevron-down" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </summary>
+              <div class="faq-answer">
+                <p>IntelliTrace natively supports Reddit user profiles (via local Playwright browser automation) and Bluesky profiles (via public AT Protocol decentralized feeds).</p>
+              </div>
+            </details>
+
+            <!-- Question 4 -->
+            <details class="faq-item">
+              <summary class="faq-question">
+                <span>How accurate is the bot detection analysis?</span>
+                <svg class="lucide-icon lucide-chevron-down" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </summary>
+              <div class="faq-answer">
+                <p>By evaluating 4 distinct layers simultaneously—semantic intent, synthetic syntax, inter-post time intervals, and 24-hour circadian cycles—IntelliTrace effectively eliminates false alarms triggered by single metrics, such as a human who posts frequently.</p>
+              </div>
+            </details>
+
+            <!-- Question 5 -->
+            <details class="faq-item">
+              <summary class="faq-question">
+                <span>What does an "Uncertain" verdict mean?</span>
+                <svg class="lucide-icon lucide-chevron-down" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </summary>
+              <div class="faq-answer">
+                <p>An "Uncertain" score (35%–65%) indicates conflicting signals, common with human-operated corporate accounts, community managers, or coordinated human astroturf rings that exhibit high post frequencies alongside natural human typing.</p>
+              </div>
+            </details>
+
+            <!-- Question 6 -->
+            <details class="faq-item">
+              <summary class="faq-question">
+                <span>Can I re-analyze accounts without re-scraping?</span>
+                <svg class="lucide-icon lucide-chevron-down" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </summary>
+              <div class="faq-answer">
+                <p>Yes. Raw timeline archives are cached on disk as <code>*_scraped.json</code>. Clicking "Re-analyze Profile" in the dashboard re-computes all 4 models in under a second without making new network requests.</p>
+              </div>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── SECTION 10: FINAL CTA BAND ──────────────────────────────── -->
+      <section id="cta" class="lp-section lp-cta-section">
+        <div class="lp-container">
+          <div class="final-cta-card">
+            <div class="final-cta-glow"></div>
+            <h2 class="final-cta-heading">Start Investigating in Seconds.</h2>
+            <p class="final-cta-sub">
+              Zero cloud setup required. Open Reddit or Bluesky and expose automated bot patterns directly on your desktop.
             </p>
+            <div class="final-cta-buttons">
+              <button id="cta-btn-reddit" class="btn-primary-gradient">
+                <svg class="btn-svg-brand svg-reddit" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                  <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.612a1.24 1.24 0 0 1 1.108-.696zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/>
+                </svg>
+                <span>Open Reddit Forensics</span>
+              </button>
+              <button id="cta-btn-bluesky" class="btn-secondary-surface">
+                <svg class="btn-svg-brand svg-bluesky" viewBox="0 0 568 501" width="18" height="18" fill="currentColor">
+                  <path d="M123.12 215.17C177.34 250.77 236.42 278.41 284 316.5C331.58 278.41 390.66 250.77 444.88 215.17C487.62 187.12 516.48 141.24 516.48 93.68C516.48 39.88 471.65 0 415.93 0C373.18 0 335.79 23.95 315.68 59.45C305.62 77.21 294.69 96.88 284 116.89C273.31 96.88 262.38 77.21 252.32 59.45C232.21 23.95 194.82 0 152.07 0C96.35 0 51.52 39.88 51.52 93.68C51.52 141.24 80.38 187.12 123.12 215.17Z M284 340.5C252.12 298.54 186.08 212.18 107.02 212.18C44.75 212.18 0 260.67 0 327.42C0 393.9 49.33 460.7 131.63 487.89C190.71 507.41 247.92 487.89 284 456.66C320.08 487.89 377.29 507.41 436.37 487.89C518.67 460.7 568 393.9 568 327.42C568 260.67 523.25 212.18 460.98 212.18C381.92 212.18 315.88 298.54 284 340.5Z"/>
+                </svg>
+                <span>Open Bluesky Forensics</span>
+              </button>
+            </div>
+            <div class="final-cta-meta">
+              <span>Offline Desktop Application</span>
+              <span>•</span>
+              <span>Local Storage Active</span>
+              <span>•</span>
+              <span>MIT Open Source</span>
+            </div>
           </div>
-        </aside>
-
-        <!-- Global Action Footer -->
-        <footer class="results-footer">
-          <button id="scan-another" class="btn-secondary" type="button">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-            <span>Scan Another User Account</span>
-          </button>
-        </footer>
-
-      </div>
-    </section>
-
-  </main>
-
-  <!-- ── MODAL: API CONFIGURATION ─────────────────────────────────────── -->
-  <div id="settings-overlay" class="modal-backdrop" aria-hidden="true">
-    <dialog class="modal-dialog" open>
-      <header class="modal-header">
-        <div class="modal-header__text">
-          <h2 class="modal-title">API Configuration</h2>
-          <p class="modal-subtitle">Manage backend endpoint and authentication credentials</p>
         </div>
-        <button id="settings-close" class="btn-icon" title="Close Configuration" aria-label="Close Settings">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
+      </section>
+
+      <!-- ── SECTION 11: FOOTER ──────────────────────────────────────── -->
+      <footer id="footer" class="lp-footer">
+        <div class="lp-container">
+          <div class="footer-columns-grid">
+            <!-- Brand Column -->
+            <div class="f-col-brand">
+              <div class="f-brand-logo">
+                <span class="brand-monogram">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/>
+                  </svg>
+                </span>
+                <span class="f-brand-name">IntelliTrace</span>
+              </div>
+              <p class="f-brand-tagline">
+                Local-first forensic intelligence and bot detection workstation for modern social networks.
+              </p>
+              <div class="f-engine-pill">
+                <span class="status-dot"></span>
+                <span>Local Engine v1.0.0</span>
+              </div>
+            </div>
+
+            <!-- Col 2: Product -->
+            <div class="f-col">
+              <h5 class="f-col-title">Product</h5>
+              <ul class="f-links-list">
+                <li><a href="#features">Forensic Models</a></li>
+                <li><a href="#how-it-works">Pipeline Architecture</a></li>
+                <li><a href="#interactive-demo">Interactive Playground</a></li>
+                <li><a href="#faq">FAQ</a></li>
+              </ul>
+            </div>
+
+            <!-- Col 3: Platforms -->
+            <div class="f-col">
+              <h5 class="f-col-title">Platforms</h5>
+              <ul class="f-links-list">
+                <li><a href="#/reddit">Reddit Intelligence</a></li>
+                <li><a href="#/bluesky">Bluesky AT Protocol</a></li>
+                <li><a href="#platforms">Comparison</a></li>
+              </ul>
+            </div>
+
+            <!-- Col 4: Engine -->
+            <div class="f-col">
+              <h5 class="f-col-title">Engine</h5>
+              <ul class="f-links-list">
+                <li><span>Local UserData Directory</span></li>
+                <li><span>XGBoost ML Classifier</span></li>
+                <li><span>Google Gemini LLM</span></li>
+                <li><span>Playwright Automation</span></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="footer-bottom-bar">
+            <span class="f-copyright">&copy; 2026 IntelliTrace • All rights reserved</span>
+            <div class="f-bottom-meta">
+              <span>Runs 100% locally</span>
+              <span>•</span>
+              <span>Zero external cloud tracking</span>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+    </main>
+
+    <!-- ═════════════════════════════════════════════════════════════════ -->
+    <!-- VIEW 2: DYNAMIC PLATFORM DASHBOARDS (#/reddit & #/bluesky)         -->
+    <!-- ═════════════════════════════════════════════════════════════════ -->
+    <main id="view-dashboard" class="view-dashboard-page" aria-label="Social Intelligence Dashboard">
+
+      <!-- ── HERO HEADER BAND (~130px) ─────────────────────────────────── -->
+      <header class="dashboard-hero-header">
+        <div class="header-band-content">
+          
+          <!-- Left: Animated Mascot + Platform Title -->
+          <div class="header-mascot-cluster">
+            <div class="header-mascot-frame">
+              <img id="dashboard-mascot-img" src="assets/mascots/snoo.gif" alt="Platform Mascot" class="header-mascot-img" />
+            </div>
+            <div class="header-titles">
+              <div class="platform-indicator-tag" id="platform-pill-badge">REDDIT COMMUNITY INTELLIGENCE</div>
+              <h2 class="platform-main-heading" id="platform-main-heading">Reddit Forensic Suite</h2>
+            </div>
+          </div>
+
+          <!-- Right: User Selector / Scraper Input & Action -->
+          <div class="header-controls-cluster">
+
+            <!-- Search Bar that ALWAYS shows currently selected user -->
+            <div class="dash-search-container">
+              <div class="search-input-field">
+                <span class="search-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </span>
+                <input
+                  id="dash-search-input"
+                  type="text"
+                  class="dash-input"
+                  placeholder="Enter username to inspect or scrape... (Ctrl+K)"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+                <kbd class="kbd-search-hint">^K</kbd>
+
+                <!-- Dropdown list of users saved on disk -->
+                <div id="dash-user-dropdown" class="dash-user-dropdown hidden" role="listbox">
+                  <div class="dropdown-heading">SAVED PROFILES ON DISK</div>
+                  <div id="dash-dropdown-items" class="dropdown-items-scroll">
+                    <!-- Dynamic -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- Scrape & Analyze Action Button -->
+              <button id="btn-dash-scrape" class="btn-action-primary">
+                <span id="btn-dash-scrape-text">Scrape &amp; Analyze</span>
+                <svg id="dash-scrape-spinner" class="spinner-icon hidden" width="15" height="15" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" stroke-dasharray="20 37" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+
+          </div>
+
+        </div>
       </header>
 
-      <form class="modal-body" onsubmit="event.preventDefault();">
-        <div class="form-group">
-          <label for="cfg-url" class="form-label">FastAPI Base Endpoint URL</label>
-          <input id="cfg-url" class="form-input" type="url" placeholder="http://localhost:8000" />
-          <span class="form-hint">Root URL for the running local IntelliTrace FastAPI service.</span>
+      <!-- ── COMPACT EXECUTION STEPPER & LOG (Pinned under header) ──────── -->
+      <section id="telemetry-bar" class="telemetry-bar-module hidden" aria-label="Scraper Live Execution">
+        <div class="telemetry-inner-wrap">
+          <div class="telemetry-left-status">
+            <span class="telemetry-pulsing-dot"></span>
+            <span>Target: <strong id="telemetry-active-target">--</strong></span>
+          </div>
+
+          <!-- Stepper -->
+          <div id="telemetry-stepper" class="telemetry-stepper">
+            <div class="tel-step" data-step="scraping">
+              <span class="tel-num">1</span><span class="tel-text">Scraping</span>
+            </div>
+            <div class="tel-line"></div>
+            <div class="tel-step" data-step="ideology">
+              <span class="tel-num">2</span><span class="tel-text">Ideology</span>
+            </div>
+            <div class="tel-line"></div>
+            <div class="tel-step" data-step="aigen">
+              <span class="tel-num">3</span><span class="tel-text">AI Auth</span>
+            </div>
+            <div class="tel-line"></div>
+            <div class="tel-step" data-step="frequency">
+              <span class="tel-num">4</span><span class="tel-text">Cadence</span>
+            </div>
+            <div class="tel-line"></div>
+            <div class="tel-step" data-step="rhythm">
+              <span class="tel-num">5</span><span class="tel-text">Rhythm</span>
+            </div>
+          </div>
+
+          <button id="btn-dash-terminal-toggle" class="btn-terminal-toggle">
+            <span>Terminal</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
         </div>
 
-        <div class="form-group">
-          <label for="cfg-key" class="form-label">Authentication API Key</label>
-          <input id="cfg-key" class="form-input" type="password" placeholder="Enter security token..." autocomplete="off" />
-          <span class="form-hint">Required for authenticated X-API-Key communication headers.</span>
+        <div id="telemetry-terminal-viewport" class="telemetry-terminal-viewport collapsed">
+          <div id="telemetry-log-lines" class="terminal-log-content"></div>
         </div>
-      </form>
+      </section>
 
-      <footer class="modal-footer">
-        <button id="settings-cancel" class="btn-secondary" type="button">Cancel</button>
-        <button id="settings-save" class="btn-primary" type="button">Save Preferences</button>
-      </footer>
-    </dialog>
+      <!-- ── TWO-COLUMN MAIN CONTENT (FLUID GRID, NO DEAD SPACE) ───────── -->
+      <div class="dashboard-main-grid">
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- LEFT COLUMN (STICKY, ~360px)                                    -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <aside class="dashboard-left-column">
+          
+          <!-- 1. Profile Summary Card -->
+          <div class="saas-card profile-card">
+            <div class="profile-card-top">
+              <div class="profile-avatar-circle" id="profile-avatar-letter">U</div>
+              <div class="profile-info-block">
+                <div class="profile-handle-row">
+                  <h3 class="profile-handle" id="profile-handle-text">u/Select_User</h3>
+                  <span class="profile-plat-badge" id="profile-plat-badge">REDDIT</span>
+                </div>
+                <div class="profile-sub-meta">
+                  <span id="profile-posts-stat">0 posts analyzed</span>
+                  <span>•</span>
+                  <span id="profile-storage-badge">Disk Cache</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-separator"></div>
+
+            <!-- 2. Large Animated Semi-Circle Verdict Gauge (0-100) -->
+            <div class="verdict-gauge-section">
+              <div class="gauge-canvas-wrapper">
+                <canvas id="gauge-verdict-canvas" width="280" height="160"></canvas>
+                <div class="gauge-center-badge">
+                  <span class="gauge-score-value" id="gauge-score-value">0</span>
+                  <span class="gauge-score-symbol">%</span>
+                </div>
+              </div>
+
+              <div class="verdict-result-banner">
+                <span class="verdict-pill-label" id="verdict-pill-label">ANALYZING</span>
+                <p class="verdict-caption-text" id="verdict-caption-text">
+                  Evaluating consensus across 4 forensic parameter engines...
+                </p>
+              </div>
+            </div>
+
+            <!-- Re-analyze Action Button -->
+            <button id="btn-reanalyze-user" class="btn-reanalyze-action">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              <span>Re-analyze Profile</span>
+            </button>
+          </div>
+
+          <!-- 3. Recent Saved Users on Disk Quick-Switch List -->
+          <div class="saas-card recent-users-card">
+            <div class="recent-users-header">
+              <span class="recent-heading">SAVED PROFILES</span>
+              <span class="recent-count" id="recent-profiles-count">0</span>
+            </div>
+            <div class="recent-users-list" id="recent-users-list">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+        </aside>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- RIGHT COLUMN (FILLS REMAINING WIDTH, EXPANDS TO FULL HEIGHT)    -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <section class="dashboard-right-column">
+
+          <!-- ── OVERVIEW SECTION (LARGE RADAR + 2x2 STATS) ─────────────── -->
+          <div class="saas-card overview-hero-card">
+            <div class="card-header-bar">
+              <div>
+                <h3 class="card-primary-title">Multi-Axis Forensics Overview</h3>
+                <p class="card-subtitle">Equal-weight synthesis across semantic intent, machine syntax, and temporal cadence.</p>
+              </div>
+              <div class="overview-consensus-chip" id="overview-consensus-chip">
+                Consensus: Evaluating
+              </div>
+            </div>
+
+            <div class="overview-content-grid">
+              
+              <!-- Large Radar Chart (min 420px tall) -->
+              <div class="radar-chart-stage">
+                <canvas id="overview-radar-large" height="420"></canvas>
+              </div>
+
+              <!-- 2x2 Big Stat Grid -->
+              <div class="overview-2x2-stat-grid">
+                
+                <!-- Stat 1: Semantic -->
+                <div class="stat-quadrant-card" data-tab-link="param1">
+                  <div class="sq-top">
+                    <span class="sq-icon">🧠</span>
+                    <span class="sq-title">Semantic Coherence</span>
+                  </div>
+                  <div class="sq-value" id="sq-semantic-val">0%</div>
+                  <div class="sq-progress-bar">
+                    <div class="sq-fill fill-semantic" id="sq-semantic-fill" style="width: 0%;"></div>
+                  </div>
+                  <div class="sq-caption" id="sq-semantic-desc">Repetitive themes &amp; narratives</div>
+                </div>
+
+                <!-- Stat 2: AI Text -->
+                <div class="stat-quadrant-card" data-tab-link="param2">
+                  <div class="sq-top">
+                    <span class="sq-icon">⚡</span>
+                    <span class="sq-title">Text Authenticity</span>
+                  </div>
+                  <div class="sq-value" id="sq-aigen-val">0%</div>
+                  <div class="sq-progress-bar">
+                    <div class="sq-fill fill-ai" id="sq-aigen-fill" style="width: 0%;"></div>
+                  </div>
+                  <div class="sq-caption" id="sq-aigen-desc">Synthetic LLM phrasing</div>
+                </div>
+
+                <!-- Stat 3: Cadence -->
+                <div class="stat-quadrant-card" data-tab-link="param3">
+                  <div class="sq-top">
+                    <span class="sq-icon">📊</span>
+                    <span class="sq-title">Posting Cadence</span>
+                  </div>
+                  <div class="sq-value" id="sq-cadence-val">0%</div>
+                  <div class="sq-progress-bar">
+                    <div class="sq-fill fill-cadence" id="sq-cadence-fill" style="width: 0%;"></div>
+                  </div>
+                  <div class="sq-caption" id="sq-cadence-desc">High-speed burst intervals</div>
+                </div>
+
+                <!-- Stat 4: Rhythm -->
+                <div class="stat-quadrant-card" data-tab-link="param4">
+                  <div class="sq-top">
+                    <span class="sq-icon">⏱️</span>
+                    <span class="sq-title">Behavioral Rhythm</span>
+                  </div>
+                  <div class="sq-value" id="sq-rhythm-val">0%</div>
+                  <div class="sq-progress-bar">
+                    <div class="sq-fill fill-rhythm" id="sq-rhythm-fill" style="width: 0%;"></div>
+                  </div>
+                  <div class="sq-caption" id="sq-rhythm-desc">Circadian variance &amp; cron ratio</div>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+
+          <!-- ── UNDERLINE-STYLE SLIDING PARAMETER TABS ─────────────────── -->
+          <div class="tabs-navigator-bar" role="tablist" aria-label="Forensic Parameters">
+            <button class="nav-param-tab active" id="tab-btn-param1" role="tab" aria-selected="true" data-tab="param1">
+              <span class="tab-glyph">🧠</span>
+              <span class="tab-text">1. Semantic Coherence</span>
+              <span class="tab-chip" id="chip-score-param1">0%</span>
+            </button>
+            <button class="nav-param-tab" id="tab-btn-param2" role="tab" aria-selected="false" data-tab="param2">
+              <span class="tab-glyph">⚡</span>
+              <span class="tab-text">2. Text Authenticity</span>
+              <span class="tab-chip" id="chip-score-param2">0%</span>
+            </button>
+            <button class="nav-param-tab" id="tab-btn-param3" role="tab" aria-selected="false" data-tab="param3">
+              <span class="tab-glyph">📊</span>
+              <span class="tab-text">3. Posting Cadence</span>
+              <span class="tab-chip" id="chip-score-param3">0%</span>
+            </button>
+            <button class="nav-param-tab" id="tab-btn-param4" role="tab" aria-selected="false" data-tab="param4">
+              <span class="tab-glyph">⏱️</span>
+              <span class="tab-text">4. Behavioral Rhythm</span>
+              <span class="tab-chip" id="chip-score-param4">0%</span>
+            </button>
+            <div id="tabs-sliding-indicator" class="tabs-sliding-indicator"></div>
+          </div>
+
+          <!-- ── TAB CONTENT CONTAINERS (FLEX GROW, NEVER EMPTY) ───────── -->
+          <div class="tabs-viewport-container">
+
+            <!-- ── TAB 1: SEMANTIC COHERENCE & IDEOLOGY ────────────────── -->
+            <article id="tab-panel-param1" class="param-panel active" role="tabpanel">
+              <div class="panel-callout-banner">
+                <span class="callout-glyph">💡</span>
+                <div class="callout-text">
+                  <strong>VERDICT SUMMARY:</strong>
+                  <span id="t1-verdict-summary">Evaluates topic variety, agenda pushing, and repetitive copy-paste phrases across messages.</span>
+                </div>
+              </div>
+
+              <div class="tab-cards-3col-grid">
+                
+                <!-- Card 1: Content Intent Donut Chart -->
+                <div class="saas-card visual-card">
+                  <div class="vc-header">
+                    <h4 class="vc-title">Content Classification</h4>
+                    <span class="vc-meaning">What this means: Bots push rigid spam or propaganda agendas.</span>
+                  </div>
+                  <div class="vc-chart-body donut-chart-wrap">
+                    <canvas id="chart-t1-donut" width="220" height="220"></canvas>
+                  </div>
+                  <div class="vc-footer-badges">
+                    <span class="intent-pill" id="t1-intent-pill">NORMAL_DISCUSSION</span>
+                    <span class="account-pill" id="t1-account-pill">HUMAN_USER</span>
+                  </div>
+                </div>
+
+                <!-- Card 2: Detected Signals Horizontal Bars -->
+                <div class="saas-card visual-card">
+                  <div class="vc-header">
+                    <h4 class="vc-title">Detected Lexical Signals</h4>
+                    <span class="vc-meaning">What this means: Identifies keyword density and structural phrasing.</span>
+                  </div>
+                  <div class="vc-chart-body">
+                    <canvas id="chart-t1-bars" height="190"></canvas>
+                  </div>
+                  <div class="signals-list-box" id="t1-signals-list-box">
+                    <!-- Dynamic chips -->
+                  </div>
+                </div>
+
+                <!-- Card 3: Pattern Summary & Explanation -->
+                <div class="saas-card visual-card">
+                  <div class="vc-header">
+                    <h4 class="vc-title">Pattern Forensics Note</h4>
+                    <span class="vc-meaning">What this means: Deep reasoning synthesized by Gemini semantic analysis.</span>
+                  </div>
+                  <div class="vc-text-body">
+                    <label class="field-title">REASONING &amp; TOPICAL PROFILE</label>
+                    <p class="field-paragraph" id="t1-pattern-narrative">
+                      Timeline exhibits organic lexical variety, casual conversational slang, and personal anecdotes without repetitive commercial or political narrative pushing.
+                    </p>
+                    <div class="risk-meter-box">
+                      <div class="rmb-header">
+                        <span>Ideology Automation Score</span>
+                        <strong id="t1-score-pct">0%</strong>
+                      </div>
+                      <div class="rmb-bar-track">
+                        <div class="rmb-bar-fill" id="t1-score-bar-fill" style="width: 0%;"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </article>
+
+            <!-- ── TAB 2: TEXT AUTHENTICITY (AI-GEN) ───────────────────── -->
+            <article id="tab-panel-param2" class="param-panel" role="tabpanel">
+              <div class="panel-callout-banner">
+                <span class="callout-glyph">💡</span>
+                <div class="callout-text">
+                  <strong>VERDICT SUMMARY:</strong>
+                  <span id="t2-verdict-summary">Analyzes structural syntax for markers of Large Language Models (ChatGPT, Claude).</span>
+                </div>
+              </div>
+
+              <div class="tab-cards-3col-grid">
+                
+                <!-- Card 1: AI Probability Gauge -->
+                <div class="saas-card visual-card">
+                  <div class="vc-header">
+                    <h4 class="vc-title">Synthetic Text Likelihood</h4>
+                    <span class="vc-meaning">What this means: Probability that timeline text was generated by an LLM prompt.</span>
+                  </div>
+                  <div class="vc-chart-body donut-chart-wrap">
+                    <canvas id="chart-t2-gauge" width="220" height="220"></canvas>
+                  </div>
+                  <div class="ai-status-indicator" id="t2-ai-status-indicator">
+                    <span class="status-dot"></span>
+                    <span class="status-name" id="t2-ai-status-name">NATURALLY HUMAN</span>
+                  </div>
+                </div>
+
+                <!-- Card 2: AI Hallmarks Checklist -->
+                <div class="saas-card visual-card">
+                  <div class="vc-header">
+                    <h4 class="vc-title">LLM Hallmarks Checklist</h4>
+                    <span class="vc-meaning">What this means: Linguistic traits typical of synthetic social posting.</span>
+                  </div>
+                  <div class="hallmarks-checklist" id="t2-hallmarks-list">
+                    <div class="hm-item" id="hm-1">
+                      <span class="hm-icon">✓</span>
+                      <div class="hm-text">
+                        <strong>Natural Conversational Typos &amp; Slang</strong>
+                        <small>Presence of informal syntax and abbreviations</small>
+                      </div>
+                    </div>
+                    <div class="hm-item" id="hm-2">
+                      <span class="hm-icon">✓</span>
+                      <div class="hm-text">
+                        <strong>No Overused Academic Transitions</strong>
+                        <small>Absence of "Furthermore", "In conclusion", "It is important to note"</small>
+                      </div>
+                    </div>
+                    <div class="hm-item" id="hm-3">
+                      <span class="hm-icon">✓</span>
+                      <div class="hm-text">
+                        <strong>Varied Emotional Cadence</strong>
+                        <small>Organic disagreement vs robotic agreeable tone</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card 3: Linguistic Reasoning -->
+                <div class="saas-card visual-card">
+                  <div class="vc-header">
+                    <h4 class="vc-title">Model Forensic Evaluation</h4>
+                    <span class="vc-meaning">What this means: Specific linguistic patterns detected in sampled messages.</span>
+                  </div>
+                  <div class="vc-text-body">
+                    <label class="field-title">OBSERVED LINGUISTIC CHARACTERISTICS</label>
+                    <p class="field-paragraph" id="t2-reasoning-paragraph">
+                      Posts demonstrate authentic conversational entropy, colloquial contractions, and contextual technical problem solving characteristic of human developers.
+                    </p>
+                  </div>
+                </div>
+
+              </div>
+            </article>
+
+            <!-- ── TAB 3: POSTING CADENCE (FREQUENCY) ──────────────────── -->
+            <article id="tab-panel-param3" class="param-panel" role="tabpanel">
+              <div class="panel-callout-banner">
+                <span class="callout-glyph">💡</span>
+                <div class="callout-text">
+                  <strong>VERDICT SUMMARY:</strong>
+                  <span id="t3-verdict-summary">Evaluates posting rates and burst density against human biological limits.</span>
+                </div>
+              </div>
+
+              <div class="tab-cards-3col-grid">
+                
+                <!-- Card 1: Bullet Chart Comparison -->
+                <div class="saas-card visual-card">
+                  <div class="vc-header">
+                    <h4 class="vc-title">Cadence Benchmark Scale</h4>
+                    <span class="vc-meaning">What this means: Average interval between actions (days). Low values indicate automation.</span>
+                  </div>
+                  <div class="bullet-benchmark-container">
+                    <div class="bullet-stat-num">
+                      <span class="bullet-big-num" id="t3-frequency-num">0.00</span>
+                      <span class="bullet-unit">days between actions</span>
+                    </div>
+                    <div class="bullet-track-bar">
+                      <div class="bt-segment seg-bot" title="Automated Burst (<0.1d)"></div>
+                      <div class="bt-segment seg-active" title="Active Human (0.1d-2d)"></div>
+                      <div class="bt-segment seg-casual" title="Casual Human (2d-14d)"></div>
+                      <div class="bt-needle" id="t3-benchmark-needle" style="left: 45%;"></div>
+                    </div>
+                    <div class="bullet-legend-row">
+                      <span class="bl-item color-bot">Machine (&lt;0.1d)</span>
+                      <span class="bl-item color-active">Active Human</span>
+                      <span class="bl-item color-casual">Casual User</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card 2: Activity Over Time Area Chart -->
+                <div class="saas-card visual-card">
+                  <div class="vc-header">
+                    <h4 class="vc-title">Activity Over Time (Timeline)</h4>
+                    <span class="vc-meaning">What this means: Temporal volume from raw timeline timestamps.</span>
+                  </div>
+                  <div class="vc-chart-body">
+                    <canvas id="chart-t3-timeline" height="190"></canvas>
+                  </div>
+                </div>
+
+                <!-- Card 3: Posts Per Day & Density Stats -->
+                <div class="saas-card visual-card">
+                  <div class="vc-header">
+                    <h4 class="vc-title">Cadence Telemetry Stats</h4>
+                    <span class="vc-meaning">What this means: XGBoost classifier output for activity velocity.</span>
+                  </div>
+                  <div class="cadence-metrics-list">
+                    <div class="cmetric-row">
+                      <span class="cm-label">Actions Analyzed</span>
+                      <strong class="cm-value" id="t3-total-posts">0</strong>
+                    </div>
+                    <div class="cmetric-row">
+                      <span class="cm-label">XGBoost Bot Probability</span>
+                      <strong class="cm-value" id="t3-model-prob">0%</strong>
+                    </div>
+                    <div class="cmetric-row">
+                      <span class="cm-label">Cadence Classification</span>
+                      <strong class="cm-value" id="t3-cadence-verdict">ORGANIC HUMAN</strong>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </article>
+
+            <!-- ── TAB 4: BEHAVIORAL RHYTHM (CIRCADIAN) ────────────────── -->
+            <article id="tab-panel-param4" class="param-panel" role="tabpanel">
+              <div class="panel-callout-banner">
+                <span class="callout-glyph">💡</span>
+                <div class="callout-text">
+                  <strong>VERDICT SUMMARY:</strong>
+                  <span id="t4-verdict-summary">Analyzes 24-hour sleep cycles, top-of-hour cron jobs, and inter-post intervals.</span>
+                </div>
+              </div>
+
+              <div class="tab-cards-3col-grid">
+                
+                <!-- Card 1: 24-Hour Circadian Bar Chart -->
+                <div class="saas-card visual-card">
+                  <div class="vc-header">
+                    <h4 class="vc-title">24-Hour Circadian Distribution (UTC)</h4>
+                    <span class="vc-meaning">What this means: Activity by hour of day. A flat 24/7 curve indicates machine operation.</span>
+                  </div>
+                  <div class="vc-chart-body">
+                    <canvas id="chart-t4-circadian" height="190"></canvas>
+                  </div>
+                </div>
+
+                <!-- Card 2: Day x Hour Activity Heatmap Matrix -->
+                <div class="saas-card visual-card">
+                  <div class="vc-header">
+                    <h4 class="vc-title">Temporal Heatmap Matrix</h4>
+                    <span class="vc-meaning">What this means: Activity density across weekdays and time blocks.</span>
+                  </div>
+                  <div class="heatmap-matrix-wrapper" id="t4-heatmap-matrix">
+                    <!-- Dynamic 7 days x 4 blocks -->
+                  </div>
+                </div>
+
+                <!-- Card 3: Top-of-Hour & Relabeled Inactivity Gap -->
+                <div class="saas-card visual-card">
+                  <div class="vc-header">
+                    <h4 class="vc-title">Rhythm Telemetry Telemetry</h4>
+                    <span class="vc-meaning">What this means: Cron ratio and quiet inactivity gaps.</span>
+                  </div>
+                  <div class="rhythm-stats-column">
+                    <div class="rhythm-stat-card">
+                      <span class="rsc-label">Top-of-the-Hour Ratio (:00 Cron)</span>
+                      <strong class="rsc-value" id="t4-top-of-hour-val">0%</strong>
+                      <small class="rsc-desc">Posts made precisely on :00 or :30 minute scheduled marks</small>
+                    </div>
+
+                    <div class="rhythm-stat-card">
+                      <span class="rsc-label">Longest Inactivity Gap</span>
+                      <strong class="rsc-value" id="t4-inactivity-gap-val">--</strong>
+                      <small class="rsc-desc">Biological rest window or inter-post dormancy period</small>
+                    </div>
+
+                    <div class="rhythm-stat-card">
+                      <span class="rsc-label">Median Gap Interval</span>
+                      <strong class="rsc-value" id="t4-median-gap-val">--</strong>
+                      <small class="rsc-desc">Normal interval between user timeline entries</small>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </article>
+
+          </div>
+
+        </section>
+
+      </div>
+
+    </main>
+
   </div>
 
-  <!-- Execute Renderer Logic -->
+  <!-- ── 4. API SETTINGS MODAL ────────────────────────────────────────── -->
+  <div id="settings-overlay" class="saas-modal-backdrop" aria-hidden="true">
+    <div class="saas-modal-dialog">
+      <header class="modal-head">
+        <div>
+          <h3 class="modal-head-title">API Configuration</h3>
+          <p class="modal-head-subtitle">Manage backend endpoint and authentication credentials</p>
+        </div>
+        <button id="settings-close-btn" class="modal-btn-close" aria-label="Close Settings">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </header>
+      <form class="modal-body-form" onsubmit="event.preventDefault();">
+        <div class="modal-input-group">
+          <label for="cfg-url">FastAPI Service URL</label>
+          <input id="cfg-url" type="url" placeholder="http://localhost:8000" />
+        </div>
+        <div class="modal-input-group">
+          <label for="cfg-key">Authentication API Key (X-API-Key)</label>
+          <input id="cfg-key" type="password" placeholder="Enter API key..." />
+        </div>
+      </form>
+      <footer class="modal-foot">
+        <button id="settings-cancel-btn" class="btn-modal-subtle" type="button">Cancel</button>
+        <button id="settings-save-btn" class="btn-modal-primary" type="button">Save Settings</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Core Renderer Script -->
   <script src="renderer.js"></script>
 </body>
 </html>

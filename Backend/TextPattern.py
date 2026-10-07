@@ -5,7 +5,8 @@ from google import genai
 
 # Load env variables and initialize client globally
 load_dotenv()
-client = genai.Client(api_key=os.getenv("API"))
+api_key = os.getenv("API")
+client = genai.Client(api_key=api_key) if api_key else None
 
 def build_analysis_prompt(user_data: dict) -> str:
     # No json.dumps() needed! We just drop the raw dictionary right into the f-string.
@@ -68,6 +69,8 @@ Return ONLY JSON in the following format:
     return prompt
 
 def run_ideology_model(user_data: dict) -> dict:
+    if not client:
+        return {"error": "Gemini API key not configured in Backend/.env", "bot_probability": 0.5}
     prompt = build_analysis_prompt(user_data)
 
     try:

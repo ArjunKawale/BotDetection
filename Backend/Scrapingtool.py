@@ -54,6 +54,17 @@ def process_target(target: str):
                 ],
             }
 
+            raw_bluesky_output = {
+                "username": target,
+                "rhythm_features_7_day_basis": rhythm_raw,
+                "timeline": texts,
+                "full_timestamp_timeline": times
+            }
+            raw_file_path = os.path.join("UserData", f"bluesky_user_{target}_scraped.json")
+            with open(raw_file_path, "w", encoding="utf-8") as f:
+                json.dump(raw_bluesky_output, f, indent=2)
+            print(f"[*] Raw Bluesky data saved to {raw_file_path}")
+
             formatted_data = {
                 "username": target,
                 "messages": user_messages,

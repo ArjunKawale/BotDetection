@@ -36,5 +36,8 @@
   },
   "allowScripts": {
     "electron@30.5.1": true
+  },
+  "dependencies": {
+    "chart.js": "^4.5.1"
   }
 }

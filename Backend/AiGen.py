@@ -5,7 +5,8 @@ from google import genai
 
 # Load env variables and initialize client globally
 load_dotenv()
-client = genai.Client(api_key=os.getenv("API"))
+api_key = os.getenv("API")
+client = genai.Client(api_key=api_key) if api_key else None
 
 def build_ai_detection_prompt(user_data: dict) -> str:
     # Safely extract up to the 5 most recent messages
@@ -45,6 +46,8 @@ Return ONLY JSON in the following exact format:
     return prompt
 
 def run_text_authenticity_model(user_data: dict) -> dict:
+    if not client:
+        return {"error": "Gemini API key not configured in Backend/.env", "ai_probability": 0.5, "is_ai_generated": False}
     prompt = build_ai_detection_prompt(user_data)
 
     try:
