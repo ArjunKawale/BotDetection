@@ -3,21 +3,17 @@ import json
 import os
 import sys
 
-# Reddit scraper & feature extraction
 from webScraperfn import scrape_and_save_user_data
 from ConvText import (
     extract_messages_from_file,
-    extract_posting_frequency,
     extract_rhythm_features,
+    extract_cadence_features,
 )
 
-# Bluesky scraper & rhythm calculation
 from bsky_scraper import scrape_bluesky_user
-from webscraper import calculate_rhythmic_features
-
+from webscraper import calculate_rhythmic_features, calculate_cadence_features
 
 def process_target(target: str):
-    # Sanitize input: remove leading @ or u/
     target = target.strip().lstrip("@")
     if target.startswith("u/"):
         target = target[2:]
@@ -26,71 +22,72 @@ def process_target(target: str):
     os.makedirs("UserData", exist_ok=True)
 
     try:
-        # Route to Bluesky: any domain-style handle containing a dot
+        # Route to Bluesky
         if "." in target:
             times, texts = scrape_bluesky_user(target)
             if not times and not texts:
                 print(f"[!] Error: No data found for Bluesky user '{target}'.")
                 sys.exit(1)
 
-            rhythm_raw = calculate_rhythmic_features(times)
-            freq_val = float(rhythm_raw.get("posting_frequency_days", 0.0))
+            # Extract features natively
+            rhythm_dict = calculate_rhythmic_features(times)
+            freq_val = float(rhythm_dict.get("posting_frequency_days", 0.0))
+            
+            action_types = [msg["type"] for msg in texts]
+            cadence_dict = calculate_cadence_features(times, action_types)
 
-            # Match Pydantic's RhythmFeatures schema exactly
-            rhythm_dict = {
-                "total_posts": int(rhythm_raw.get("total_posts", 0)),
-                "median_gap_seconds": float(rhythm_raw.get("median_gap_seconds", 0.0)),
-                "gap_variance": float(rhythm_raw.get("gap_variance", 0.0)),
-                "top_of_hour_ratio": float(rhythm_raw.get("top_of_hour_ratio", 0.0)),
-                "hour_variance": float(rhythm_raw.get("hour_variance", 0.0)),
-                "avg_sleep_hours": float(rhythm_raw.get("avg_sleep_hours", 0.0)),
-            }
-
-            # Match Pydantic's MessagesWrapper schema
+            # Format strictly matching the target schema
             user_messages = {
                 "username": target,
                 "messages": [
-                    {"type": msg["type"], "text": msg["text"]} for msg in texts
+                    {"type": msg["type"], "text": msg["text"], "timestamp": msg["timestamp"]} for msg in texts
                 ],
             }
-
-            raw_bluesky_output = {
-                "username": target,
-                "rhythm_features_7_day_basis": rhythm_raw,
-                "timeline": texts,
-                "full_timestamp_timeline": times
-            }
-            raw_file_path = os.path.join("UserData", f"bluesky_user_{target}_scraped.json")
-            with open(raw_file_path, "w", encoding="utf-8") as f:
-                json.dump(raw_bluesky_output, f, indent=2)
-            print(f"[*] Raw Bluesky data saved to {raw_file_path}")
 
             formatted_data = {
                 "username": target,
                 "messages": user_messages,
                 "frequency_data": freq_val,
                 "rhythm_features": rhythm_dict,
+                "cadence_features": cadence_dict,
+                "full_timestamp_timeline": sorted(times)
             }
 
-        # Route to Reddit (standard alphanumeric usernames)
+        # Route to Reddit
         else:
             raw_file_path = scrape_and_save_user_data(target)
             if not os.path.exists(raw_file_path):
-                print(
-                    f"[!] Error: Raw data file for Reddit user '{target}' was not created."
-                )
+                print(f"[!] Error: Raw data file for Reddit user '{target}' was not created.")
                 sys.exit(1)
 
             print(f"[*] Raw data saved to {raw_file_path}. Formatting now...")
             user_messages = extract_messages_from_file(raw_file_path)
-            freq_val = extract_posting_frequency(raw_file_path)
+            
+            # Add timestamps into the messages payload to match your required schema
+            with open(raw_file_path, "r", encoding="utf-8") as f:
+                raw_data = json.load(f)
+            
+            messages_with_ts = []
+            for item in raw_data.get("timeline", []):
+                if "text" in item:
+                    messages_with_ts.append({
+                        "type": item.get("type", "comment"),
+                        "text": item.get("text", ""),
+                        "timestamp": item.get("timestamp")
+                    })
+            user_messages["messages"] = messages_with_ts
+            
             rhythm_dict = extract_rhythm_features(raw_file_path)
+            cadence_dict = extract_cadence_features(raw_file_path)
+            freq_val = float(rhythm_dict.get("posting_frequency_days", 0.0))
 
             formatted_data = {
                 "username": target,
                 "messages": user_messages,
                 "frequency_data": freq_val,
                 "rhythm_features": rhythm_dict,
+                "cadence_features": cadence_dict,
+                "full_timestamp_timeline": sorted(raw_data.get("full_timestamp_timeline", []))
             }
 
         output_file = os.path.join("UserData", f"formatted_{target}.json")
@@ -103,14 +100,9 @@ def process_target(target: str):
         print(f"[!] Error during processing: {e}")
         sys.exit(1)
 
-
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Scrape and format user data across platforms."
-    )
-    parser.add_argument(
-        "target", help="Reddit username or Bluesky handle to scrape"
-    )
+    parser = argparse.ArgumentParser(description="Scrape and format user data across platforms.")
+    parser.add_argument("target", help="Reddit username or Bluesky handle to scrape")
     args = parser.parse_args()
 
     process_target(args.target)

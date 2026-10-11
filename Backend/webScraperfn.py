@@ -1,6 +1,6 @@
 import json
 import os
-from webscraper import scrape_hybrid_data, calculate_rhythmic_features
+from webscraper import scrape_hybrid_data, calculate_rhythmic_features, calculate_cadence_features
 
 def scrape_and_save_user_data(username: str) -> str:
     # STEP 1: Scrape (Calls the synchronous Playwright wrapper in webscraper.py)
@@ -8,7 +8,8 @@ def scrape_and_save_user_data(username: str) -> str:
 
     # STEP 2: Compute rhythm features
     rhythm_features = calculate_rhythmic_features(timestamps)
-
+    action_types = [m.get("type", "comment") for m in messages]
+    cadence_features = calculate_cadence_features(timestamps, action_types)
     # STEP 3: Build JSON (100% preserved schema & keys)
     final_output = {
         "username": username,

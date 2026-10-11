@@ -130,6 +130,61 @@ def scrape_hybrid_data(username: str):
     """Synchronous interface matching webScraperfn.py signature."""
     return asyncio.run(_scrape_hybrid_data_async(username))
 
+def calculate_cadence_features(timestamps, action_types=None):
+    import numpy as np
+    import pandas as pd
+    
+    if action_types is None:
+        action_types = []
+
+    ts = np.sort(np.array(timestamps, dtype=float))
+    total_posts = len(ts)
+
+    if total_posts < 2:
+        return {
+            'burst_ratio': 0.0, 'quiet_window_hours': 12.0,
+            'posts_per_active_day': 1.0, 'log_lifespan_days': 1.0, 'comment_ratio': 0.5
+        }
+
+    gaps = np.diff(ts).astype(float)
+    gaps = gaps[gaps >= 0]
+
+    burst_threshold = 120.0
+    burst_ratio = float(np.sum(gaps < burst_threshold) / len(gaps)) if len(gaps) > 0 else 0.0
+
+    dts = pd.to_datetime(ts, unit='s')
+    hours = dts.hour.values
+    hour_counts = np.bincount(hours, minlength=24)
+    doubled = np.concatenate([hour_counts, hour_counts])
+
+    is_zero = (doubled == 0).astype(int)
+    max_quiet, curr_quiet = 0, 0
+    for z in is_zero:
+        if z == 1:
+            curr_quiet += 1
+            max_quiet = max(max_quiet, curr_quiet)
+        else:
+            curr_quiet = 0
+    quiet_window_hours = float(min(24, max_quiet))
+
+    lifespan_days = max(1.0, (ts[-1] - ts[0]) / 86400.0)
+    unique_active_days = len(np.unique(dts.date))
+    posts_per_active_day = float(total_posts / max(1, unique_active_days))
+    log_lifespan_days = float(np.log10(lifespan_days + 1.0))
+
+    if len(action_types) > 0:
+        is_comment = np.array([1 if t in ['comment', 'reply'] else 0 for t in action_types])
+        comment_ratio = float(is_comment.mean())
+    else:
+        comment_ratio = 0.5
+
+    return {
+        'burst_ratio': burst_ratio,
+        'quiet_window_hours': quiet_window_hours,
+        'posts_per_active_day': posts_per_active_day,
+        'log_lifespan_days': log_lifespan_days,
+        'comment_ratio': comment_ratio
+    }
 def calculate_rhythmic_features(timestamps: list[float]) -> dict:
     """Exact 6-feature rhythm calculator matching model training inputs."""
     timestamps = sorted(timestamps)

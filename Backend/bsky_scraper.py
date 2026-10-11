@@ -4,14 +4,9 @@ import requests
 from datetime import datetime, timezone
 
 # Reuse your existing rhythm calculator
-from webscraper import calculate_rhythmic_features
+from webscraper import calculate_rhythmic_features, calculate_cadence_features
 
 def scrape_bluesky_user(handle: str):
-    """
-    Fetches up to 7 days of timestamps and 100 recent posts for a Bluesky user.
-    Uses the unauthenticated public AT Protocol HTTP API.
-    """
-    # Append default domain if the user only types the prefix
     if "." not in handle:
         handle += ".bsky.social"
         
@@ -28,7 +23,7 @@ def scrape_bluesky_user(handle: str):
         params = {
             "actor": handle,
             "limit": 100,
-            "filter": "posts_no_replies" # Excludes replies to keep the dataset focused on core activity
+            "filter": "posts_with_replies" # <-- REQUIRED for comment_ratio
         }
         if cursor:
             params["cursor"] = cursor
@@ -49,7 +44,6 @@ def scrape_bluesky_user(handle: str):
             post = item.get("post", {})
             record = post.get("record", {})
             
-            # Skip reposts made by the target user (we only want their original cadence/text)
             if post.get("author", {}).get("handle") != handle:
                 continue
                 
@@ -60,25 +54,24 @@ def scrape_bluesky_user(handle: str):
                 continue
                 
             try:
-                # Handle Bluesky's ISO 8601 format natively
                 dt = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
                 ts = dt.timestamp()
             except ValueError:
                 continue
+            
+            # Determine Action Type: If the record has a "reply" key, it's a comment
+            action_type = "comment" if "reply" in record else "post"
                 
-            # 1. Collect up to 100 recent text payloads for Semantic Analysis
             if len(recent_text_items) < 100:
                 recent_text_items.append({
-                    "type": "post",
+                    "type": action_type,
                     "text": text,
                     "timestamp": ts
                 })
                 
-            # 2. Collect all timestamps within the 7-day window for Rhythm Analysis
             if ts >= one_week_ago:
                 full_timestamp_timeline.append(ts)
             else:
-                # Stop paginating if we have 100 texts AND hit the 1-week boundary
                 if len(recent_text_items) >= 100:
                     return full_timestamp_timeline, recent_text_items
                     
@@ -86,10 +79,9 @@ def scrape_bluesky_user(handle: str):
         if not cursor:
             break
             
-        time.sleep(0.2) # Basic rate limit respect
+        time.sleep(0.2)
         
     return full_timestamp_timeline, recent_text_items
-
 if __name__ == "__main__":
     target_user = "horsedisc.bsky.social" # Example handle
     
