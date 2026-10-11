@@ -574,7 +574,7 @@ function renderSearchDropdown() {
   });
 }
 
-async function loadUserProfile(username) {
+async function loadUserProfile(username, forcePipeline = false) {
   if (!username) return;
   appState.currentUser = username;
 
@@ -605,7 +605,8 @@ async function loadUserProfile(username) {
       0;
     dom.profilePostsStat.textContent = `${posts} posts analyzed`;
 
-    if (profile.analysis) {
+    // Only load the cache if we aren't forcing a fresh pipeline run
+    if (!forcePipeline && profile.analysis) {
       dom.profileStorageBadge.textContent = "Persisted Analysis";
       appState.currentAnalysis = profile.analysis;
       renderAllVisualizations();
@@ -638,17 +639,17 @@ function computeWeightedVerdict(analysis) {
     fa.ideology?.bot_probability ?? analysis.ideology?.bot_probability ?? 0;
   const aigenProb =
     fa.ai_authenticity?.ai_probability ?? analysis.ai_authenticity?.ai_probability ?? 0;
-  const freqProb =
-    fa.frequency?.bot_probability ?? analysis.frequency?.bot_probability ?? 0;
+  
+  let freqProb = fa.frequency?.bot_probability ?? analysis.frequency?.bot_probability ?? 0;
+  // Normalize frequency probability just in case
+  if (freqProb > 1.0) freqProb = freqProb / 100.0;
+
   const rhythmProb =
     fa.rhythm?.bot_probability ?? analysis.rhythm?.bot_probability ?? 0;
 
-  const w = VERDICT_CONFIG.weights;
-  const weightedProb =
-    ideologyProb * w.ideology +
-    aigenProb * w.aigen +
-    freqProb * w.frequency +
-    rhythmProb * w.rhythm;
+  // AI Authenticity is removed from the bot math
+  // Distribute 100% across the 3 remaining models (Ideology, Cadence, Rhythm)
+  const weightedProb = (ideologyProb + freqProb + rhythmProb) / 3.0;
 
   let label = "Uncertain";
   let tagClass = "uncertain";
@@ -1410,35 +1411,57 @@ function renderTab2AiAuth(verdict) {
   }
 }
 
-// ── TAB 3: POSTING CADENCE (FREQUENCY) ──────────────────────────────────────
-
 function renderTab3Cadence(verdict) {
+  const fa = appState.currentAnalysis?.full_analysis || {};
+  const freqData = fa.frequency || appState.currentAnalysis?.frequency || {};
+
+  // Normalize bot probability to a 0-100 scale
+  let cadenceBotProb = 0;
+  if (typeof freqData.bot_probability === "number") {
+    cadenceBotProb = freqData.bot_probability <= 1.0 
+      ? freqData.bot_probability * 100 
+      : freqData.bot_probability;
+  }
+
+  // Handle formatted frequency value for bullet chart
   const freqVal =
     appState.currentFormattedData?.frequency_data ??
     appState.currentRawData?.rhythm_features_7_day_basis?.posting_frequency_days ??
     0;
 
-  dom.t3FrequencyNum.textContent = Number(freqVal).toFixed(2);
-  dom.t3TotalPosts.textContent = dom.profilePostsStat.textContent.split(" ")[0] || "100";
-  dom.t3ModelProb.textContent = `${Math.round(verdict.scores.frequency * 100)}%`;
+  if (dom.t3FrequencyNum) dom.t3FrequencyNum.textContent = Number(freqVal).toFixed(2);
+  if (dom.t3TotalPosts) dom.t3TotalPosts.textContent = dom.profilePostsStat.textContent.split(" ")[0] || "100";
+  
+  // Set the 0-100% formatted probability string
+  if (dom.t3ModelProb) dom.t3ModelProb.textContent = `${cadenceBotProb.toFixed(1)}%`;
 
-  if (freqVal < 0.1) {
-    dom.t3CadenceVerdict.textContent = "MACHINE BURST SYNDICATION";
-    dom.t3CadenceVerdict.style.color = "var(--risk-bot)";
-  } else if (freqVal <= 3.0) {
-    dom.t3CadenceVerdict.textContent = "ACTIVE COMMUNITY PARTICIPATION";
-    dom.t3CadenceVerdict.style.color = "var(--risk-human)";
-  } else {
-    dom.t3CadenceVerdict.textContent = "CASUAL HUMAN INTERMITTENT";
-    dom.t3CadenceVerdict.style.color = "var(--risk-human)";
+  // Display Cadence classification verdict
+  const prediction = freqData.prediction ? freqData.prediction.toUpperCase() : "UNKNOWN";
+  if (dom.t3CadenceVerdict) {
+    dom.t3CadenceVerdict.textContent = prediction;
+    
+    if (freqVal < 0.1 || prediction === "BOT") {
+      dom.t3CadenceVerdict.style.color = "var(--risk-bot)";
+    } else if (freqVal <= 3.0) {
+      dom.t3CadenceVerdict.style.color = "var(--risk-human)";
+    } else {
+      dom.t3CadenceVerdict.style.color = "var(--risk-human)";
+    }
+  }
+  
+  // Update status summary text if available
+  if (dom.t3VerdictSummary && freqData.status) {
+    dom.t3VerdictSummary.textContent = freqData.status;
   }
 
   // Needle positioning on bullet chart
-  let needlePct = 50;
-  if (freqVal < 0.1) needlePct = Math.max(5, (freqVal / 0.1) * 20);
-  else if (freqVal <= 2.0) needlePct = 20 + ((freqVal - 0.1) / 1.9) * 40;
-  else needlePct = Math.min(95, 60 + ((freqVal - 2.0) / 10.0) * 35);
-  dom.t3BenchmarkNeedle.style.left = `${needlePct}%`;
+  if (dom.t3BenchmarkNeedle) {
+    let needlePct = 50;
+    if (freqVal < 0.1) needlePct = Math.max(5, (freqVal / 0.1) * 20);
+    else if (freqVal <= 2.0) needlePct = 20 + ((freqVal - 0.1) / 1.9) * 40;
+    else needlePct = Math.min(95, 60 + ((freqVal - 2.0) / 10.0) * 35);
+    dom.t3BenchmarkNeedle.style.left = `${needlePct}%`;
+  }
 
   // Timeline Activity Area Chart
   if (activeCharts.t3Timeline) activeCharts.t3Timeline.destroy();
@@ -1733,12 +1756,12 @@ async function triggerScraperRun() {
     } else if (ev.event === "stderr") {
       logToTerminal(ev.data, "warn");
     } else if (ev.event === "done") {
-      cleanup();
+      if (typeof cleanup === "function") cleanup(); // Safety check added
       logToTerminal("Scraper finished successfully.", "ok");
       updateStepper("scraping", "done");
       finishScrape(true, target);
     } else if (ev.event === "error") {
-      cleanup();
+      if (typeof cleanup === "function") cleanup(); // Safety check added
       logToTerminal(`Scraper error: ${ev.data}`, "err");
       finishScrape(false);
     }
@@ -1755,12 +1778,20 @@ async function finishScrape(success, targetUser = null) {
 
   if (success && targetUser) {
     await reloadUsersList(appState.currentPlatform);
-    navigate(`/${appState.currentPlatform}`, {
-      user: targetUser,
-      tab: appState.currentTab,
-    });
+    
+    // Update the URL silently to prevent a race condition with the hash router
+    window.history.replaceState(null, "", `#/${appState.currentPlatform}?user=${targetUser}&tab=${appState.currentTab}`);
+    
+    // Force the profile to load and BYPASS the local JSON cache
+    await loadUserProfile(targetUser, true);
+  } else {
+    // If the scrape failed, hide the telemetry bar after a delay
+    setTimeout(() => {
+      dom.telemetryBar.classList.add("hidden");
+    }, 2000);
   }
 }
+
 
 // ── RE-ANALYZE BUTTON ───────────────────────────────────────────────────────
 

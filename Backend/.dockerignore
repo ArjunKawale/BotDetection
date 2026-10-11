@@ -5,3 +5,4 @@ __pycache__/
 UserData/
 .venv/
 venv/
+.debug_artifacts/

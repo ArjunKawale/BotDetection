@@ -27,7 +27,7 @@ def predict_cadence(features: dict) -> dict:
 
     # 1. Deterministic Physical Guardrails
     # Never sleeps + extreme daily output -> 24/7 trigger bot
-    if quiet_window <= 1.0 and posts_per_day > 50.0:
+    if quiet_window <= 1.0 and posts_per_day > 150.0:
         return {
             "prediction": "Bot",
             "bot_probability": 0.999,
