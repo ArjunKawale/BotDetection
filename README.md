@@ -1,60 +1,158 @@
-# Intellitrace: Reddit Bot Detector
+# IntelliTrace — Electron Desktop App
 
-Intellitrace is a multi-model bot detection system designed, developed, and evaluated to identify automated accounts on the Reddit app. It utilizes an Electron application frontend and a FastAPI backend to run a comprehensive analysis pipeline on Reddit user profiles.
+> A multi-signal desktop application for analysing public Reddit and Bluesky account activity using content analysis and behavioural models.
 
-## Architecture
+![Electron](https://img.shields.io/badge/Electron-Desktop_App-47848F)
+![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688)
+![XGBoost](https://img.shields.io/badge/XGBoost-ML_Model-EA7E24)
+![Gemini API](https://img.shields.io/badge/Google_Gemini-Content_Analysis-4285F4)
 
-The system is divided into two primary components:
+---
 
-*   **Intellitrace (Frontend)**: A desktop application built with Electron, providing a frameless UI to input usernames, stream analysis logs, and visualize the final probability metrics.
-*   **Backend (FastAPI)**: A REST API that orchestrates the machine learning and LLM pipelines, evaluating users across four main criteria:
-    *   **Ideology & Intent**: Uses Gemini AI to detect spam, propaganda, and running bits.
-    *   **AI Authenticity**: Uses Gemini AI to evaluate hallmarks of Large Language Model generation.
-    *   **Posting Frequency**: Analyzes post counts using a trained XGBoost model.
-    *   **Rhythmic Patterns**: Evaluates gaps, sleep hours, and posting variance using a trained XGBoost model.
+## Overview
+
+IntelliTrace provides a desktop interface for collecting public account activity, running four complementary detection signals, and reviewing an overall bot-likelihood indicator with individual signal results.
+
+## Features
+
+- Reddit and Bluesky account collection
+- Four-signal analysis pipeline
+- Live analysis progress through Server-Sent Events (SSE)
+- Overall result and signal-level visualisations
+- Local profile data and analysis history
+- API endpoint and key configuration through the application settings
+
+## Detection Signals
+
+| Signal | Technology | Purpose |
+|---|---|---|
+| Ideology & Intent | Google Gemini API | Examines themes, repeated narratives and spam- or propaganda-like patterns. |
+| AI-Text Authenticity | Google Gemini API | Estimates whether analysed text may be AI-generated. |
+| Posting Cadence | XGBoost | Evaluates bursts, quiet windows and posting density. |
+| Rhythmic Patterns | XGBoost | Evaluates posting intervals, timing regularity and activity rhythms. |
+
+> These signals provide supporting evidence, not definitive proof that an account is automated. AI-generated text alone does not establish that an account is a bot.
+
+---
+
+## Tech Stack
+
+**Frontend:** Electron, HTML, CSS, JavaScript, Chart.js  
+**Backend:** Python, FastAPI, Uvicorn  
+**Analysis:** Google Gemini API, XGBoost, Pandas, NumPy  
+**Collection:** Playwright-based Reddit scraper, Bluesky AT Protocol client  
+**Communication:** REST API and Server-Sent Events (SSE)
+
+---
 
 ## Folder Structure
 
-*   `Intellitrace/`: Contains the Electron frontend code (`main.js`, `renderer.js`, `preload.js`, UI assets).
-*   `Backend/`: Contains the FastAPI application (`main.py`), ML models (`XGBoost JSON files`), Gemini AI integration scripts (`AiGen.py`, `TextPattern.py`), and the Playwright web scraper (`webscraper.py`, `Scrapingtool.py`).
+The relevant frontend structure is:
 
-## Setup and Installation
+```text
+BotDetection/
+├── Backend/
+│   ├── main.py
+│   ├── requirements.txt
+│   ├── .env
+│   ├── Scrapingtool.py
+│   ├── Scrapingtool.spec
+│   └── ...
+│
+└── Intellitrace/
+    ├── main.js
+    ├── preload.js
+    ├── index.html
+    ├── renderer.js
+    ├── package.json
+    ├── README.md
+    ├── assets/
+    ├── Scrapingtool/
+    │   └── Scrapingtool.exe
+    └── UserData/
+```
 
-### Backend Setup
-1.  Navigate to the `Backend` directory.
-2.  Install Python dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
-3.  Create a `.env` file in the `Backend` directory with your API keys:
-    ```env
-    API="your_gemini_api_key"
-    API_SECURITY_KEY="your_fastapi_security_key"
-    ```
-4.  Run the FastAPI server:
-    ```bash
-    uvicorn main:app --host 0.0.0.0 --port 8000
-    ```
-*(Note: The scraper tool relies on a bundled Chromium binary and can be packaged into an executable using PyInstaller via `Scrapingtool.spec`)*
+The application also uses an OS-specific application-data directory for settings and stored account data. The scraper executable must be built for the target operating system; it is not created by `npm install`.
 
-### Frontend Setup
-1.  Navigate to the `Intellitrace` directory.
-2.  Install Node.js dependencies:
-    ```bash
-    npm install
-    ```
-3.  Start the Electron application:
-    ```bash
-    npm start
-    ```
+---
 
-## Usage
-1. Open the Intellitrace desktop application.
-2. Click the gear icon (**API Settings**) in the bottom-left to configure your **API Base URL** (e.g., `http://localhost:8000`) and **X-API-Key** (must match `API_SECURITY_KEY`).
-3. Enter a Reddit username (with or without the `u/` prefix) and click **Run Analysis**.
-4. The system will launch the local scraper to retrieve the user's recent timeline, trigger the backend evaluation pipeline, and stream the resulting metrics back to the UI interface.
+## Setup
 
-## Build and Distribution
-To build a distributable Windows NSIS installer for the frontend:
+### 1. Start the FastAPI backend
+
+From the repository root, open a terminal:
+
+```powershell
+cd Backend
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+```
+
+Create `Backend/.env` and configure the required values:
+
+```dotenv
+API_SECURITY_KEY=your_local_api_secret
+API=your_gemini_api_key
+```
+
+The `API_SECURITY_KEY` value must match the key configured in the app's **API Configuration** settings. `API` is used for Gemini analysis. Keep this file private and do not commit it.
+
+Start the backend:
+
+```powershell
+python -m uvicorn main:app --host 127.0.0.1 --port 8000
+```
+
+Keep this terminal running.
+
+### 2. Install and start the Electron app
+
+Open a second terminal:
+
+```powershell
+cd Intellitrace
+npm install
+npm start
+```
+
+Before running an analysis, confirm that the backend is available and the expected scraper executable exists under `Intellitrace/Scrapingtool/`.
+
+---
+
+## How It Works
+
+1. Enter an account username and select Reddit or Bluesky.
+2. The Electron main process launches the configured scraper.
+3. Collected account data is formatted and prepared for analysis.
+4. The frontend sends the analysis request to FastAPI using the `X-API-Key` header.
+5. The backend runs the four detection signals and streams progress updates.
+6. The dashboard displays the overall result and individual signal outputs.
+
+## API Configuration
+
+Open **API Configuration** in the application to set:
+
+- **API Base URL** — defaults to `http://localhost:8000`
+- **API Key** — must match `API_SECURITY_KEY` in `Backend/.env`
+
+Settings are saved in the operating-system application-data directory. The default development key is for local testing only; use a strong, private key for any deployment.
+
+## Packaging
+
+The current `package.json` build script targets a **Linux AppImage**:
+
 ```bash
 npm run build
+```
+
+This does **not** currently produce a Windows NSIS installer. Windows packaging requires a Windows build target in `package.json` and verification that the scraper and its resources are bundled correctly.
+
+---
+
+## Project
+
+**IntelliTrace: Multi-Model Online Authentic Identity Detection System**  
+Group ID: EXCS-TE-BE-24  
+Department of Electronics & Computer Science  
+Vidyalankar Institute of Technology
