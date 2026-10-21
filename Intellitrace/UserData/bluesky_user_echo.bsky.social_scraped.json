@@ -1,0 +1,616 @@
+{
+  "username": "echo.bsky.social",
+  "rhythm_features_7_day_basis": {
+    "total_posts": 100,
+    "posting_frequency_days": 0.0416,
+    "median_gap_seconds": 3600.0,
+    "gap_variance": 42.5,
+    "top_of_hour_ratio": 0.98,
+    "hour_variance": 4.12,
+    "avg_sleep_hours": 1.2
+  },
+  "timeline": [
+    {
+      "type": "post",
+      "text": "Automated telemetry update #100: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791378435
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #99: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791374835
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #98: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791371235
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #97: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791367635
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #96: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791364035
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #95: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791360435
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #94: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791356835
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #93: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791353235
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #92: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791349635
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #91: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791346035
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #90: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791342435
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #89: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791338835
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #88: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791335235
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #87: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791331635
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #86: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791328035
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #85: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791324435
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #84: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791320835
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #83: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791317235
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #82: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791313635
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #81: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791310035
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #80: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791306435
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #79: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791302835
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #78: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791299235
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #77: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791295635
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #76: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791292035
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #75: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791288435
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #74: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791284835
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #73: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791281235
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #72: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791277635
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #71: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791274035
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #70: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791270435
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #69: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791266835
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #68: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791263235
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #67: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791259635
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #66: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791256035
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #65: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791252435
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #64: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791248835
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #63: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791245235
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #62: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791241635
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #61: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791238035
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #60: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791234435
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #59: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791230835
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #58: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791227235
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #57: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791223635
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #56: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791220035
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #55: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791216435
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #54: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791212835
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #53: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791209235
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #52: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791205635
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #51: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791202035
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #50: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791198435
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #49: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791194835
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #48: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791191235
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #47: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791187635
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #46: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791184035
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #45: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791180435
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #44: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791176835
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #43: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791173235
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #42: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791169635
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #41: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791166035
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #40: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791162435
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #39: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791158835
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #38: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791155235
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #37: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791151635
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #36: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791148035
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #35: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791144435
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #34: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791140835
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #33: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791137235
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #32: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791133635
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #31: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791130035
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #30: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791126435
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #29: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791122835
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #28: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791119235
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #27: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791115635
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #26: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791112035
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #25: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791108435
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #24: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791104835
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #23: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791101235
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #22: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791097635
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #21: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791094035
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #20: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791090435
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #19: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791086835
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #18: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791083235
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #17: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791079635
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #16: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791076035
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #15: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791072435
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #14: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791068835
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #13: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791065235
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #12: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791061635
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #11: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791058035
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #10: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791054435
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #9: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791050835
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #8: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791047235
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #7: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791043635
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #6: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791040035
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #5: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791036435
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #4: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791032835
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #3: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791029235
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #2: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791025635
+    },
+    {
+      "type": "post",
+      "text": "Automated telemetry update #1: Service health verified across decentralized relay nodes.",
+      "timestamp": 1791022035
+    }
+  ],
+  "full_timestamp_timeline": [
+    1791378435,
+    1791374835,
+    1791371235,
+    1791367635,
+    1791364035,
+    1791360435,
+    1791356835,
+    1791353235,
+    1791349635,
+    1791346035,
+    1791342435,
+    1791338835,
+    1791335235,
+    1791331635,
+    1791328035,
+    1791324435,
+    1791320835,
+    1791317235,
+    1791313635,
+    1791310035,
+    1791306435,
+    1791302835,
+    1791299235,
+    1791295635,
+    1791292035,
+    1791288435,
+    1791284835,
+    1791281235,
+    1791277635,
+    1791274035,
+    1791270435,
+    1791266835,
+    1791263235,
+    1791259635,
+    1791256035,
+    1791252435,
+    1791248835,
+    1791245235,
+    1791241635,
+    1791238035,
+    1791234435,
+    1791230835,
+    1791227235,
+    1791223635,
+    1791220035,
+    1791216435,
+    1791212835,
+    1791209235,
+    1791205635,
+    1791202035,
+    1791198435,
+    1791194835,
+    1791191235,
+    1791187635,
+    1791184035,
+    1791180435,
+    1791176835,
+    1791173235,
+    1791169635,
+    1791166035,
+    1791162435,
+    1791158835,
+    1791155235,
+    1791151635,
+    1791148035,
+    1791144435,
+    1791140835,
+    1791137235,
+    1791133635,
+    1791130035,
+    1791126435,
+    1791122835,
+    1791119235,
+    1791115635,
+    1791112035,
+    1791108435,
+    1791104835,
+    1791101235,
+    1791097635,
+    1791094035,
+    1791090435,
+    1791086835,
+    1791083235,
+    1791079635,
+    1791076035,
+    1791072435,
+    1791068835,
+    1791065235,
+    1791061635,
+    1791058035,
+    1791054435,
+    1791050835,
+    1791047235,
+    1791043635,
+    1791040035,
+    1791036435,
+    1791032835,
+    1791029235,
+    1791025635,
+    1791022035
+  ]
+}

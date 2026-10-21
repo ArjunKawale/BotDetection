@@ -1,0 +1,25 @@
+{
+  "status": "Success",
+  "username": "Express-Ad-4830",
+  "overall_probability": 0.513875,
+  "is_bot_overall": true,
+  "full_analysis": {
+    "ideology": {
+      "error": "Gemini API key not configured in Backend/.env",
+      "bot_probability": 0.5
+    },
+    "ai_authenticity": {
+      "error": "Gemini API key not configured in Backend/.env",
+      "ai_probability": 0.5,
+      "is_ai_generated": false
+    },
+    "frequency": {
+      "is_bot": true,
+      "bot_probability": 0.9769
+    },
+    "rhythm": {
+      "is_bot": false,
+      "bot_probability": 0.0786
+    }
+  }
+}

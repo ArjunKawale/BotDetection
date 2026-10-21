@@ -1,0 +1,33 @@
+{
+  "status": "Success",
+  "username": "Plus-Affect-6365",
+  "overall_probability": 0.12,
+  "is_bot_overall": false,
+  "full_analysis": {
+    "ideology": {
+      "content_classification": "normal_discussion",
+      "account_type": "human_user",
+      "pattern_detected": false,
+      "pattern_description": "General conversational engagement across multiple topics (Linux customization, gaming, career advice). Rich personal anecdotes and authentic human responses.",
+      "bot_probability": 0.08,
+      "key_indicators": [
+        "Varied discussion topics",
+        "Natural tone variation",
+        "Human anecdotal replies"
+      ]
+    },
+    "ai_authenticity": {
+      "is_ai_generated": false,
+      "ai_probability": 0.1,
+      "reasoning": "Conversational casual typos, colloquial abbreviations (ngl, afaik), and contextual debugging commentary."
+    },
+    "frequency": {
+      "is_bot": false,
+      "bot_probability": 0.14
+    },
+    "rhythm": {
+      "is_bot": false,
+      "bot_probability": 0.16
+    }
+  }
+}
