@@ -5,7 +5,7 @@ from PyInstaller.utils.hooks import collect_all
 datas, binaries, hiddenimports = collect_all('playwright')
 
 # Add your local chromium directory to the bundle's root
-datas.append(('chromium-1228', 'chromium-1228'))
+datas.append(('chromium-1248', 'chromium-1248'))
 
 a = Analysis(
     ['Scrapingtool.py'],  # <-- CHANGED from 'main.py' to 'Scrapingtool.py'

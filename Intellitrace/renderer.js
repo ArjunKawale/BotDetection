@@ -77,7 +77,7 @@ if (!window.api && !window.electronAPI) {
               ? "Formulaic automated phrases with consistent mechanical cadence."
               : "Conversational casual typos, colloquial abbreviations, and authentic human discussion."
           },
-          frequency: { bot_probability: isBsky ? 0.96 : 0.14 },
+          frequency: { bot_probability: isBsky ? 0.96 : 0.14, prediction: isBsky ? "bot" : "organic human", status: "Analyzed posting velocity." },
           rhythm: { bot_probability: isBsky ? 0.98 : 0.16 }
         }
       };
@@ -336,6 +336,9 @@ function showLandingView() {
   if (dom.navLinkReddit) dom.navLinkReddit.classList.remove("active");
   if (dom.navLinkBluesky) dom.navLinkBluesky.classList.remove("active");
 
+  if (dom.navBtnBluesky) dom.navBtnBluesky.style.display = "";
+  if (dom.navBtnReddit) dom.navBtnReddit.style.display = "";
+
   refreshUserCounters();
   renderAllLandingVisualizations();
 }
@@ -350,6 +353,10 @@ async function showDashboardView(platform, userParam, tabParam) {
   if (dom.navLinkLanding) dom.navLinkLanding.classList.remove("active");
   if (dom.navLinkReddit) dom.navLinkReddit.classList.toggle("active", platform === "reddit");
   if (dom.navLinkBluesky) dom.navLinkBluesky.classList.toggle("active", platform === "bluesky");
+
+  // Remove redundant button to current platform from top header
+  if (dom.navBtnBluesky) dom.navBtnBluesky.style.display = platform === "bluesky" ? "none" : "";
+  if (dom.navBtnReddit) dom.navBtnReddit.style.display = platform === "reddit" ? "none" : "";
 
   setPlatform(platform);
 
@@ -605,7 +612,7 @@ async function loadUserProfile(username, forcePipeline = false) {
       0;
     dom.profilePostsStat.textContent = `${posts} posts analyzed`;
 
-    // Only load the cache if we aren't forcing a fresh pipeline run
+    // Load the cache if we aren't forcing a fresh pipeline run
     if (!forcePipeline && profile.analysis) {
       dom.profileStorageBadge.textContent = "Persisted Analysis";
       appState.currentAnalysis = profile.analysis;
@@ -726,11 +733,24 @@ function renderAllVisualizations() {
   dom.sqRhythmVal.textContent = `${pRhy}%`;
   dom.sqRhythmFill.style.width = `${pRhy}%`;
 
-  // 3. Tab Chips
-  dom.chipScoreParam1.textContent = `${pIdeo}%`;
-  dom.chipScoreParam2.textContent = `${pAi}%`;
-  dom.chipScoreParam3.textContent = `${pCad}%`;
-  dom.chipScoreParam4.textContent = `${pRhy}%`;
+  // 3. Tab Chips with Risk Badges
+  const getRiskClass = (val) => (val < 35 ? "chip-human" : val > 65 ? "chip-bot" : "chip-uncertain");
+  if (dom.chipScoreParam1) {
+    dom.chipScoreParam1.textContent = `${pIdeo}%`;
+    dom.chipScoreParam1.className = `tab-chip ${getRiskClass(pIdeo)}`;
+  }
+  if (dom.chipScoreParam2) {
+    dom.chipScoreParam2.textContent = `${pAi}%`;
+    dom.chipScoreParam2.className = `tab-chip ${getRiskClass(pAi)}`;
+  }
+  if (dom.chipScoreParam3) {
+    dom.chipScoreParam3.textContent = `${pCad}%`;
+    dom.chipScoreParam3.className = `tab-chip ${getRiskClass(pCad)}`;
+  }
+  if (dom.chipScoreParam4) {
+    dom.chipScoreParam4.textContent = `${pRhy}%`;
+    dom.chipScoreParam4.className = `tab-chip ${getRiskClass(pRhy)}`;
+  }
 
   // 4. Large Overview Radar Chart (min 420px)
   renderOverviewRadar(verdict);
@@ -758,11 +778,14 @@ function drawSemiCircleGauge(pct, strokeColor) {
   const radius = Math.min(cx - 24, cy - 10);
   const lineWidth = 16;
 
+  const isDark = (dom.html.getAttribute("data-theme") || "dark") === "dark";
+  const trackColor = isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.08)";
+
   // Background track (semi-circle)
   ctx.beginPath();
   ctx.arc(cx, cy, radius, Math.PI, 0, false);
   ctx.lineWidth = lineWidth;
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+  ctx.strokeStyle = trackColor;
   ctx.lineCap = "round";
   ctx.stroke();
 
@@ -977,6 +1000,11 @@ function renderLandingDonutSemantic() {
   if (!window.Chart || !dom.landingDonutSemantic) return;
   if (activeCharts.landingDonutSemantic) activeCharts.landingDonutSemantic.destroy();
 
+  const isDark = (dom.html.getAttribute("data-theme") || "light") === "dark";
+  const colors = isDark 
+    ? ["#3B82F6", "#60A5FA", "#93C5FD", "#334155"]
+    : ["#1D4ED8", "#3B82F6", "#93C5FD", "#CBD5E1"];
+
   const ctx = dom.landingDonutSemantic.getContext("2d");
   activeCharts.landingDonutSemantic = new Chart(ctx, {
     type: "doughnut",
@@ -985,7 +1013,7 @@ function renderLandingDonutSemantic() {
       datasets: [
         {
           data: [55, 25, 15, 5],
-          backgroundColor: ["#10B981", "#0085FF", "#8B5CF6", "#FF4500"],
+          backgroundColor: colors,
           borderWidth: 0,
         },
       ],
@@ -1014,6 +1042,7 @@ function renderLandingGaugeAuthenticity() {
 
   const isDark = (dom.html.getAttribute("data-theme") || "light") === "dark";
   const trackBg = isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(11, 13, 18, 0.08)";
+  const gaugeColor = isDark ? "#60A5FA" : "#2563EB";
 
   const ctx = dom.landingGaugeAuthenticity.getContext("2d");
   activeCharts.landingGaugeAuthenticity = new Chart(ctx, {
@@ -1023,7 +1052,7 @@ function renderLandingGaugeAuthenticity() {
       datasets: [
         {
           data: [10, 90],
-          backgroundColor: ["#F59E0B", trackBg],
+          backgroundColor: [gaugeColor, trackBg],
           circumference: 180,
           rotation: 270,
           borderWidth: 0,
@@ -1055,6 +1084,10 @@ function renderLandingBulletCadence() {
   const isDark = (dom.html.getAttribute("data-theme") || "light") === "dark";
   const textColor = isDark ? "#A8AAAE" : "#5B6270";
 
+  const colMachine = isDark ? "rgba(255, 255, 255, 0.12)" : "#CBD5E1";
+  const colActive = isDark ? "rgba(96, 165, 250, 0.6)" : "#60A5FA";
+  const colCasual = isDark ? "#3B82F6" : "#1D4ED8";
+
   const ctx = dom.landingBulletCadence.getContext("2d");
   activeCharts.landingBulletCadence = new Chart(ctx, {
     type: "bar",
@@ -1062,21 +1095,21 @@ function renderLandingBulletCadence() {
       labels: ["Velocity"],
       datasets: [
         {
-          label: "Machine (<0.1d)",
+          label: "Automated (<0.1d)",
           data: [10],
-          backgroundColor: "rgba(239, 68, 68, 0.8)",
+          backgroundColor: colMachine,
           stack: "ranges",
         },
         {
           label: "Active Human (0.1-2d)",
           data: [40],
-          backgroundColor: "rgba(16, 185, 129, 0.8)",
+          backgroundColor: colActive,
           stack: "ranges",
         },
         {
           label: "Casual User (>2d)",
           data: [50],
-          backgroundColor: "rgba(0, 133, 255, 0.8)",
+          backgroundColor: colCasual,
           stack: "ranges",
         },
       ],
@@ -1119,6 +1152,7 @@ function renderLandingBarCircadian() {
   const isDark = (dom.html.getAttribute("data-theme") || "light") === "dark";
   const gridColor = isDark ? "rgba(255, 255, 255, 0.06)" : "rgba(11, 13, 18, 0.06)";
   const textColor = isDark ? "#A8AAAE" : "#5B6270";
+  const barColor = isDark ? "rgba(96, 165, 250, 0.85)" : "#2563EB";
 
   const labels = Array.from({ length: 24 }, (_, i) => `${i}h`);
   // Natural human curve: sleep 0h-7h, active 8h-23h
@@ -1132,8 +1166,8 @@ function renderLandingBarCircadian() {
       datasets: [
         {
           data,
-          backgroundColor: "#8B5CF6",
-          borderRadius: 3,
+          backgroundColor: barColor,
+          borderRadius: 2,
         },
       ],
     },
@@ -1311,7 +1345,7 @@ function renderTab1Semantic(verdict) {
               isProp ? 70 : 10,
               10,
             ],
-            backgroundColor: ["#10B981", "#EF4444", "#F59E0B", "#8B5CF6"],
+            backgroundColor: ["#3B82F6", "#60A5FA", "#93C5FD", "#334155"],
             borderWidth: 0,
           },
         ],
@@ -1342,10 +1376,10 @@ function renderTab1Semantic(verdict) {
           {
             data: [p < 35 ? 85 : 20, p < 35 ? 78 : 15, p, p > 50 ? 80 : 12],
             backgroundColor: [
-              "#10B981",
-              "#0085FF",
-              p > 50 ? "#EF4444" : "#F59E0B",
-              p > 50 ? "#EF4444" : "#10B981",
+              "#2563EB",
+              "#3B82F6",
+              "#60A5FA",
+              "#94A3B8",
             ],
             borderRadius: 4,
           },
@@ -1391,7 +1425,7 @@ function renderTab2AiAuth(verdict) {
         datasets: [
           {
             data: [aiProb, 100 - aiProb],
-            backgroundColor: [isAi ? "#EF4444" : "#F59E0B", "#10B981"],
+            backgroundColor: [isAi ? "#2563EB" : "#3B82F6", "#E2E8F0"],
             borderWidth: 0,
           },
         ],
@@ -1410,6 +1444,8 @@ function renderTab2AiAuth(verdict) {
     });
   }
 }
+
+// ── TAB 3: POSTING CADENCE (FREQUENCY) ──────────────────────────────────────
 
 function renderTab3Cadence(verdict) {
   const fa = appState.currentAnalysis?.full_analysis || {};
@@ -1537,15 +1573,15 @@ function renderTab4Rhythm(verdict) {
       ? `${(medianSec / 3600).toFixed(1)} hrs`
       : `${Math.round(medianSec / 60)} mins`;
 
+  const rawTimes =
+    appState.currentRawData?.full_timestamp_timeline ||
+    (appState.currentRawData?.timeline || []).map((t) => t.timestamp).filter(Boolean);
+
   // 24-Hour Circadian Bar Chart (UTC)
   if (activeCharts.t4Circadian) activeCharts.t4Circadian.destroy();
   if (dom.chartT4Circadian) {
     const ctx = dom.chartT4Circadian.getContext("2d");
     const hourCounts = new Array(24).fill(0);
-
-    const rawTimes =
-      appState.currentRawData?.full_timestamp_timeline ||
-      (appState.currentRawData?.timeline || []).map((t) => t.timestamp).filter(Boolean);
 
     if (rawTimes && rawTimes.length > 0) {
       rawTimes.forEach((ts) => {
@@ -1592,21 +1628,58 @@ function renderTab4Rhythm(verdict) {
     });
   }
 
-  // Day x Hour Heatmap Matrix Render
-  dom.t4HeatmapMatrix.innerHTML = "";
-  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  days.forEach((day, di) => {
-    const col = document.createElement("div");
-    col.className = "hm-day-col";
-    col.innerHTML = `<span class="hm-day-title">${day}</span>`;
-    for (let b = 0; b < 4; b++) {
-      const cell = document.createElement("div");
-      const lvl = (di + b) % 4;
-      cell.className = `hm-cell ${lvl > 0 ? `level-${lvl}` : ""}`;
-      col.appendChild(cell);
+  // Day x Hour Heatmap Matrix Render (Real 7-Day x 4-Block Activity Density)
+  if (dom.t4HeatmapMatrix) {
+    dom.t4HeatmapMatrix.innerHTML = "";
+    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const blockLabels = [
+      "00:00 - 06:00 UTC (Night / Sleep Window)",
+      "06:00 - 12:00 UTC (Morning)",
+      "12:00 - 18:00 UTC (Afternoon)",
+      "18:00 - 24:00 UTC (Evening)",
+    ];
+
+    const matrix = Array.from({ length: 7 }, () => [0, 0, 0, 0]);
+    if (rawTimes && rawTimes.length > 0) {
+      rawTimes.forEach((ts) => {
+        const d = new Date(ts * 1000);
+        const day = (d.getUTCDay() + 6) % 7; // Mon=0..Sun=6
+        const hour = d.getUTCHours();
+        const block = Math.min(3, Math.floor(hour / 6));
+        matrix[day][block]++;
+      });
     }
-    dom.t4HeatmapMatrix.appendChild(col);
-  });
+
+    let maxCount = 0;
+    for (let di = 0; di < 7; di++) {
+      for (let b = 0; b < 4; b++) {
+        if (matrix[di][b] > maxCount) maxCount = matrix[di][b];
+      }
+    }
+
+    days.forEach((day, di) => {
+      const col = document.createElement("div");
+      col.className = "hm-day-col";
+      col.innerHTML = `<span class="hm-day-title">${day}</span>`;
+      for (let b = 0; b < 4; b++) {
+        const cell = document.createElement("div");
+        const count = matrix[di][b];
+        let lvl = 0;
+        if (count > 0) {
+          if (maxCount <= 3) {
+            lvl = count;
+          } else {
+            const ratio = count / maxCount;
+            lvl = ratio < 0.35 ? 1 : ratio < 0.7 ? 2 : 3;
+          }
+        }
+        cell.className = `hm-cell ${lvl > 0 ? `level-${lvl}` : "level-0"}`;
+        cell.title = `${day} · ${blockLabels[b]}: ${count} post${count === 1 ? "" : "s"}`;
+        col.appendChild(cell);
+      }
+      dom.t4HeatmapMatrix.appendChild(col);
+    });
+  }
 }
 
 // ── FASTAPI SSE PIPELINE STREAMING ──────────────────────────────────────────
@@ -1756,12 +1829,12 @@ async function triggerScraperRun() {
     } else if (ev.event === "stderr") {
       logToTerminal(ev.data, "warn");
     } else if (ev.event === "done") {
-      if (typeof cleanup === "function") cleanup(); // Safety check added
+      if (typeof cleanup === "function") cleanup();
       logToTerminal("Scraper finished successfully.", "ok");
       updateStepper("scraping", "done");
       finishScrape(true, target);
     } else if (ev.event === "error") {
-      if (typeof cleanup === "function") cleanup(); // Safety check added
+      if (typeof cleanup === "function") cleanup();
       logToTerminal(`Scraper error: ${ev.data}`, "err");
       finishScrape(false);
     }
@@ -1848,6 +1921,15 @@ function activateTab(tabId, updateRoute = true) {
     });
   }
 
+  // Synchronize 2x2 overview stat cards active state
+  document.querySelectorAll(".stat-quadrant-card").forEach((card) => {
+    const isTarget = card.getAttribute("data-tab-link") === tabId;
+    card.classList.toggle("active", isTarget);
+    card.setAttribute("aria-selected", isTarget ? "true" : "false");
+    const pill = card.querySelector(".sq-action-pill");
+    if (pill) pill.textContent = isTarget ? "Active" : "Inspect →";
+  });
+
   if (dom.paramPanels) {
     dom.paramPanels.forEach((panel) => {
       panel.classList.toggle("active", panel.id === `tab-panel-${tabId}`);
@@ -1888,7 +1970,41 @@ if (dom.navParamTabs) {
 document.querySelectorAll(".stat-quadrant-card").forEach((card) => {
   card.addEventListener("click", () => {
     const target = card.getAttribute("data-tab-link");
-    if (target) activateTab(target, true);
+    if (target) {
+      activateTab(target, true);
+      const panelTarget = document.getElementById("tab-panel-" + target);
+      if (panelTarget) {
+        panelTarget.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }
+  });
+  card.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      const target = card.getAttribute("data-tab-link");
+      if (target) {
+        activateTab(target, true);
+        const panelTarget = document.getElementById("tab-panel-" + target);
+        if (panelTarget) {
+          panelTarget.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+      }
+    }
+  });
+});
+
+// Guided step navigation buttons between parameter tabs
+document.querySelectorAll(".btn-step-nav").forEach((btn) => {
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    const target = btn.getAttribute("data-nav-target");
+    if (target) {
+      activateTab(target, true);
+      const panelTarget = document.getElementById("tab-panel-" + target);
+      if (panelTarget) {
+        panelTarget.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }
   });
 });
 
