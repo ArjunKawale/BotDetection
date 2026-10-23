@@ -1390,17 +1390,14 @@
                   </div>
                 </div>
 
-                <!-- Card 2: Detected Signals Horizontal Bars -->
+                <!-- Card 2: Key Forensic Indicators -->
                 <div class="saas-card visual-card">
                   <div class="vc-header">
-                    <h4 class="vc-title">Detected Lexical Signals</h4>
-                    <span class="vc-meaning">Keyword density &amp; structural phrasing variance</span>
-                  </div>
-                  <div class="vc-chart-body">
-                    <canvas id="chart-t1-bars" height="190"></canvas>
+                    <h4 class="vc-title">Key Forensic Indicators</h4>
+                    <span class="vc-meaning">Linguistic and behavioral signals synthesized by Gemini LLM</span>
                   </div>
                   <div class="signals-list-box" id="t1-signals-list-box">
-                    <!-- Dynamic chips -->
+                    <!-- Dynamic forensic indicators -->
                   </div>
                 </div>
 
@@ -1476,27 +1473,7 @@
                     <span class="vc-meaning">Linguistic markers typical of synthetic social posting</span>
                   </div>
                   <div class="hallmarks-checklist" id="t2-hallmarks-list">
-                    <div class="hm-item" id="hm-1">
-                      <span class="hm-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-                      <div class="hm-text">
-                        <strong>Natural Conversational Typos &amp; Slang</strong>
-                        <small>Presence of informal syntax and abbreviations</small>
-                      </div>
-                    </div>
-                    <div class="hm-item" id="hm-2">
-                      <span class="hm-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-                      <div class="hm-text">
-                        <strong>No Overused Academic Transitions</strong>
-                        <small>Absence of "Furthermore", "In conclusion", "It is important to note"</small>
-                      </div>
-                    </div>
-                    <div class="hm-item" id="hm-3">
-                      <span class="hm-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-                      <div class="hm-text">
-                        <strong>Varied Emotional Cadence</strong>
-                        <small>Organic disagreement vs robotic agreeable tone</small>
-                      </div>
-                    </div>
+                    <!-- Dynamic hallmarks checklist rendered by renderer.js -->
                   </div>
                 </div>
 
@@ -1539,63 +1516,45 @@
                 </div>
               </div>
 
-              <div class="tab-cards-3col-grid">
+              <div class="tab-cards-1col-grid">
                 
-                <!-- Card 1: Bullet Chart Comparison -->
-                <div class="saas-card visual-card">
+                <!-- Full-Width Card: Activity Distribution Over Time -->
+                <div class="saas-card visual-card cadence-timeline-card">
                   <div class="vc-header">
-                    <h4 class="vc-title">Cadence Benchmark Scale</h4>
-                    <span class="vc-meaning">Inter-post intervals benchmarked against human biological limits</span>
+                    <h4 class="vc-title">Activity Distribution Over Time</h4>
+                    <span class="vc-meaning">Chronological posting volume across observed account history</span>
                   </div>
-                  <div class="bullet-benchmark-container">
-                    <div class="bullet-stat-num">
-                      <span class="bullet-big-num" id="t3-frequency-num">0.00</span>
-                      <span class="bullet-unit">days between actions</span>
-                    </div>
-                    <div class="bullet-track-bar">
-                      <div class="bt-segment seg-bot" title="Automated Burst (<0.1d)"></div>
-                      <div class="bt-segment seg-active" title="Active Human (0.1d-2d)"></div>
-                      <div class="bt-segment seg-casual" title="Casual Human (2d-14d)"></div>
-                      <div class="bt-needle" id="t3-benchmark-needle" style="left: 45%;"></div>
-                    </div>
-                    <div class="bullet-legend-row">
-                      <span class="bl-item color-bot">Machine (&lt;0.1d)</span>
-                      <span class="bl-item color-active">Active Human</span>
-                      <span class="bl-item color-casual">Casual User</span>
-                    </div>
-                  </div>
-                </div>
 
-                <!-- Card 2: Activity Over Time Area Chart -->
-                <div class="saas-card visual-card">
-                  <div class="vc-header">
-                    <h4 class="vc-title">Activity Over Time (Timeline)</h4>
-                    <span class="vc-meaning">Temporal volume from raw timeline timestamps</span>
+                  <!-- Quick Stats Ribbon (Factual Non-Averaged Counts) -->
+                  <div class="cadence-timeline-ribbon">
+                    <div class="ctr-item">
+                      <span class="ctr-label">Scraped Volume</span>
+                      <strong class="ctr-value" id="t3-total-posts">0</strong>
+                    </div>
+                    <div class="ctr-item">
+                      <span class="ctr-label">Observed Lifespan</span>
+                      <strong class="ctr-value" id="t3-timeline-timespan">—</strong>
+                    </div>
+                    <div class="ctr-item">
+                      <span class="ctr-label">Active Days</span>
+                      <strong class="ctr-value" id="t3-timeline-active-days">—</strong>
+                    </div>
+                    <div class="ctr-item">
+                      <span class="ctr-label">Cadence Classification</span>
+                      <div class="ctr-pill-wrap">
+                        <span class="cadence-verdict-pill" id="t3-cadence-verdict">ORGANIC HUMAN</span>
+                      </div>
+                    </div>
                   </div>
-                  <div class="vc-chart-body">
-                    <canvas id="chart-t3-timeline" height="190"></canvas>
-                  </div>
-                </div>
 
-                <!-- Card 3: Posts Per Day & Density Stats -->
-                <div class="saas-card visual-card">
-                  <div class="vc-header">
-                    <h4 class="vc-title">Cadence Telemetry Stats</h4>
-                    <span class="vc-meaning">Gradient boosted cadence velocity assessment</span>
+                  <!-- Chart Container -->
+                  <div class="vc-chart-body cadence-timeline-chart-wrap">
+                    <canvas id="chart-t3-timeline" height="260"></canvas>
                   </div>
-                  <div class="cadence-metrics-list">
-                    <div class="cmetric-row">
-                      <span class="cm-label">Actions Analyzed</span>
-                      <strong class="cm-value" id="t3-total-posts">0</strong>
-                    </div>
-                    <div class="cmetric-row">
-                      <span class="cm-label">XGBoost Bot Probability</span>
-                      <strong class="cm-value" id="t3-model-prob">0%</strong>
-                    </div>
-                    <div class="cmetric-row">
-                      <span class="cm-label">Cadence Classification</span>
-                      <strong class="cm-value" id="t3-cadence-verdict">ORGANIC HUMAN</strong>
-                    </div>
+
+                  <!-- Unbiased Explanation Note -->
+                  <div class="cadence-info-callout">
+                    <span>Displays chronological actions across the account lifespan. Human activity naturally concentrates in irregular conversational sessions with extended quiet intervals, whereas scripted automation shows unnatural, clockwork uniformity.</span>
                   </div>
                 </div>
 
@@ -1624,32 +1583,51 @@
                 </div>
               </div>
 
+              <!-- Tab 4 Date Context & Month Filter Bar -->
+              <div class="tab-filter-bar">
+                <div class="tfb-info">
+                  <span class="tfb-label">OBSERVED LIFESPAN:</span>
+                  <span class="tfb-val" id="t4-observed-span">—</span>
+                  <span class="tfb-badge" id="t4-observed-days-badge">—</span>
+                </div>
+                <div class="tfb-control">
+                  <label for="t4-month-filter" class="tfb-select-label">FILTER BY MONTH:</label>
+                  <select id="t4-month-filter" class="tfb-select">
+                    <option value="ALL">All Time (Full History)</option>
+                  </select>
+                </div>
+              </div>
+
               <div class="tab-cards-3col-grid">
                 
                 <!-- Card 1: 24-Hour Circadian Bar Chart -->
                 <div class="saas-card visual-card">
                   <div class="vc-header">
-                    <h4 class="vc-title">24-Hour Circadian Distribution (UTC)</h4>
-                    <span class="vc-meaning">24-hour UTC circadian activity distribution histogram</span>
+                    <h4 class="vc-title">Daily 24-Hour Activity Cycle</h4>
+                    <span class="vc-meaning">Actions by hour of the day (UTC) — reveals natural sleep dips vs 24/7 bot uptime</span>
                   </div>
                   <div class="vc-chart-body">
                     <canvas id="chart-t4-circadian" height="190"></canvas>
+                  </div>
+                  <div class="circadian-legend-strip">
+                    <span class="cls-item"><span class="cls-dot cls-night"></span> Night / Sleep Window (00:00–06:00 UTC)</span>
+                    <span class="cls-item"><span class="cls-dot cls-day"></span> Active Browsing Hours</span>
                   </div>
                 </div>
 
                 <!-- Card 2: Day x Hour Activity Heatmap Matrix -->
                 <div class="saas-card visual-card">
                   <div class="vc-header">
-                    <h4 class="vc-title">Temporal Heatmap Matrix</h4>
-                    <span class="vc-meaning">7-day weekday activity matrix &amp; sleep intervals</span>
+                    <h4 class="vc-title">Weekly Activity Schedule</h4>
+                    <span class="vc-meaning">Action density mapped across days of the week and 6-hour windows</span>
                   </div>
                   <div class="heatmap-card-body">
                     <div class="heatmap-time-labels">
                       <span class="hm-time-title">UTC</span>
-                      <span class="hm-time-tag" title="Night / Human biological sleep hours">00-06h</span>
-                      <span class="hm-time-tag" title="Morning hours">06-12h</span>
-                      <span class="hm-time-tag" title="Afternoon hours">12-18h</span>
-                      <span class="hm-time-tag" title="Evening / Night hours">18-24h</span>
+                      <span class="hm-time-tag" title="Night hours (00:00 - 06:00 UTC)">Night 00-06h</span>
+                      <span class="hm-time-tag" title="Morning hours (06:00 - 12:00 UTC)">Morn 06-12h</span>
+                      <span class="hm-time-tag" title="Afternoon hours (12:00 - 18:00 UTC)">Noon 12-18h</span>
+                      <span class="hm-time-tag" title="Evening hours (18:00 - 24:00 UTC)">Eve 18-24h</span>
                     </div>
                     <div class="heatmap-matrix-wrapper" id="t4-heatmap-matrix">
                       <!-- Dynamic 7 days x 4 blocks -->
@@ -1657,7 +1635,7 @@
                   </div>
                   <div class="heatmap-legend-strip">
                     <span class="hml-label">Density:</span>
-                    <span class="hml-item"><span class="hml-box hml-0"></span> Inactive / Sleep</span>
+                    <span class="hml-item"><span class="hml-box hml-0"></span> Inactive (0)</span>
                     <span class="hml-item"><span class="hml-box hml-1"></span> Low</span>
                     <span class="hml-item"><span class="hml-box hml-2"></span> Moderate</span>
                     <span class="hml-item"><span class="hml-box hml-3"></span> High</span>
@@ -1667,26 +1645,26 @@
                 <!-- Card 3: Top-of-Hour & Relabeled Inactivity Gap -->
                 <div class="saas-card visual-card">
                   <div class="vc-header">
-                    <h4 class="vc-title">Rhythm &amp; Automation Telemetry</h4>
-                    <span class="vc-meaning">Cron regularity (:00/:30) and inactivity sleep window</span>
+                    <h4 class="vc-title">Timing &amp; Automation Signals</h4>
+                    <span class="vc-meaning">Cron regularity indicators and session dormancy intervals</span>
                   </div>
                   <div class="rhythm-stats-column">
                     <div class="rhythm-stat-card">
-                      <span class="rsc-label">Top-of-the-Hour Ratio (:00 Cron)</span>
+                      <span class="rsc-label">Scheduled Cron Hit Ratio (:00 / :30)</span>
                       <strong class="rsc-value" id="t4-top-of-hour-val">0%</strong>
-                      <small class="rsc-desc">Posts made precisely on :00 or :30 minute scheduled marks</small>
+                      <small class="rsc-desc">Hits on scheduled minute marks (&lt;15% indicates human randomness)</small>
                     </div>
 
                     <div class="rhythm-stat-card">
-                      <span class="rsc-label">Longest Inactivity Gap</span>
+                      <span class="rsc-label">Longest Account Hiatus</span>
                       <strong class="rsc-value" id="t4-inactivity-gap-val">--</strong>
-                      <small class="rsc-desc">Biological rest window or inter-post dormancy period</small>
+                      <small class="rsc-desc">Longest gap between separate posting sessions (dormancy hiatus)</small>
                     </div>
 
                     <div class="rhythm-stat-card">
-                      <span class="rsc-label">Median Gap Interval</span>
+                      <span class="rsc-label">Median Time Between Posts</span>
                       <strong class="rsc-value" id="t4-median-gap-val">--</strong>
-                      <small class="rsc-desc">Normal interval between user timeline entries</small>
+                      <small class="rsc-desc">Typical interval between consecutive user actions</small>
                     </div>
                   </div>
                 </div>
