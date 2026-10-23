@@ -255,14 +255,26 @@ const dom = {
   // Tab 3 (Posting Cadence)
   t3VerdictSummary: document.getElementById("t3-verdict-summary"),
   t3FrequencyNum: document.getElementById("t3-frequency-num"),
-  t3BenchmarkNeedle: document.getElementById("t3-benchmark-needle"),
+  t3TimelineTimespan: document.getElementById("t3-timeline-timespan"),
+  t3TimelineActiveDays: document.getElementById("t3-timeline-active-days"),
   chartT3Timeline: document.getElementById("chart-t3-timeline"),
   t3TotalPosts: document.getElementById("t3-total-posts"),
   t3ModelProb: document.getElementById("t3-model-prob"),
   t3CadenceVerdict: document.getElementById("t3-cadence-verdict"),
+  t3FeatBurst: document.getElementById("t3-feat-burst"),
+  t3BarBurst: document.getElementById("t3-bar-burst"),
+  t3FeatQuiet: document.getElementById("t3-feat-quiet"),
+  t3BarQuiet: document.getElementById("t3-bar-quiet"),
+  t3FeatDensity: document.getElementById("t3-feat-density"),
+  t3BarDensity: document.getElementById("t3-bar-density"),
+  t3FeatComment: document.getElementById("t3-feat-comment"),
+  t3BarComment: document.getElementById("t3-bar-comment"),
 
   // Tab 4 (Behavioral Rhythm)
   t4VerdictSummary: document.getElementById("t4-verdict-summary"),
+  t4ObservedSpan: document.getElementById("t4-observed-span"),
+  t4ObservedDaysBadge: document.getElementById("t4-observed-days-badge"),
+  t4MonthFilter: document.getElementById("t4-month-filter"),
   chartT4Circadian: document.getElementById("chart-t4-circadian"),
   t4HeatmapMatrix: document.getElementById("t4-heatmap-matrix"),
   t4TopOfHourVal: document.getElementById("t4-top-of-hour-val"),
@@ -605,6 +617,14 @@ async function loadUserProfile(username, forcePipeline = false) {
     appState.currentFormattedData = profile.formatted;
     appState.currentRawData = profile.raw;
 
+    // If no separate raw file exists but formatted JSON has timeline data, use it as fallback
+    if (!appState.currentRawData && profile.formatted?.full_timestamp_timeline) {
+      appState.currentRawData = {
+        full_timestamp_timeline: profile.formatted.full_timestamp_timeline,
+        timeline: [],
+      };
+    }
+
     const posts =
       profile.formatted?.rhythm_features?.total_posts ||
       profile.raw?.timeline?.length ||
@@ -732,6 +752,44 @@ function renderAllVisualizations() {
   dom.sqCadenceFill.style.width = `${pCad}%`;
   dom.sqRhythmVal.textContent = `${pRhy}%`;
   dom.sqRhythmFill.style.width = `${pRhy}%`;
+
+  // Populate stat card descriptions with real data from formatted JSON
+  const cf = appState.currentFormattedData;
+  if (cf) {
+    const cadFt = cf.cadence_features || {};
+    const rFt = cf.rhythm_features || {};
+    const postsPerDay = cadFt.posts_per_active_day;
+    const burstRatio = cadFt.burst_ratio;
+    const medGap = rFt.median_gap_seconds;
+    const topHour = rFt.top_of_hour_ratio;
+
+    if (dom.sqCadenceDesc) {
+      const ppd = postsPerDay != null ? `${postsPerDay.toFixed(1)} posts/active day` : "";
+      const br = burstRatio != null ? ` · ${(burstRatio * 100).toFixed(0)}% burst` : "";
+      dom.sqCadenceDesc.textContent = ppd + br || "Posting velocity analysis";
+    }
+    if (dom.sqRhythmDesc) {
+      const mg = medGap != null
+        ? medGap > 3600 ? `Median gap ${(medGap / 3600).toFixed(1)}h` : `Median gap ${Math.round(medGap / 60)}min`
+        : "";
+      const th = topHour != null ? ` · Top-of-hour: ${(topHour * 100).toFixed(0)}%` : "";
+      dom.sqRhythmDesc.textContent = mg + th || "Circadian behaviour analysis";
+    }
+    if (dom.sqSemanticDesc) {
+      const fa = appState.currentAnalysis?.full_analysis || {};
+      const ideo = fa.ideology || appState.currentAnalysis?.ideology || {};
+      dom.sqSemanticDesc.textContent = ideo.content_classification
+        ? `${(ideo.content_classification).replace(/_/g, " ")} · ${ideo.account_type?.replace(/_/g, " ") || ""}`.trim()
+        : "Semantic topic coherence";
+    }
+    if (dom.sqAigenDesc) {
+      const fa = appState.currentAnalysis?.full_analysis || {};
+      const ai = fa.ai_authenticity || appState.currentAnalysis?.ai_authenticity || {};
+      dom.sqAigenDesc.textContent = ai.is_ai_generated
+        ? "Synthetic text markers detected"
+        : "Organic human writing detected";
+    }
+  }
 
   // 3. Tab Chips with Risk Badges
   const getRiskClass = (val) => (val < 35 ? "chip-human" : val > 65 ? "chip-bot" : "chip-uncertain");
@@ -1308,44 +1366,140 @@ function switchDemoProfile(profileKey) {
 }
 
 
+// ── HELPER: CHECK IF ACCOUNT HAS SCRAPED MESSAGES ──────────────────────────
+
+function hasScrapedMessages() {
+  // Direct negative signals from Gemini
+  const ideo = appState.currentAnalysis?.full_analysis?.ideology;
+  const ai = appState.currentAnalysis?.full_analysis?.ai_authenticity;
+  if (
+    ideo?.pattern_description &&
+    /no messages were provided|no messages found|corpus empty/i.test(ideo.pattern_description)
+  ) {
+    return false;
+  }
+  if (
+    Array.isArray(ideo?.key_indicators) &&
+    ideo.key_indicators.some((k) =>
+      /empty message|lack of activity|insufficient textual evidence/i.test(k)
+    )
+  ) {
+    return false;
+  }
+  if (
+    ai?.reasoning &&
+    /no input text|no text available|no messages/i.test(ai.reasoning)
+  ) {
+    return false;
+  }
+
+  const formattedMsgs = appState.currentFormattedData?.messages?.messages;
+  if (Array.isArray(formattedMsgs) && formattedMsgs.length > 0) return true;
+
+  const rawTimeline = appState.currentRawData?.timeline;
+  if (Array.isArray(rawTimeline) && rawTimeline.length > 0) return true;
+
+  const rawTimestamps =
+    appState.currentFormattedData?.full_timestamp_timeline ||
+    appState.currentRawData?.full_timestamp_timeline;
+  if (Array.isArray(rawTimestamps) && rawTimestamps.length > 0) return true;
+
+  const totalPosts = appState.currentFormattedData?.rhythm_features?.total_posts || 0;
+  if (totalPosts > 0) return true;
+
+  // Fallback: If there's an analysis with indicators and no negative empty signals
+  if (Array.isArray(ideo?.key_indicators) && ideo.key_indicators.length > 0) return true;
+
+  return false;
+}
+
 // ── TAB 1: SEMANTIC COHERENCE & IDEOLOGY ────────────────────────────────────
 
 function renderTab1Semantic(verdict) {
   const fa = appState.currentAnalysis?.full_analysis || {};
   const ideo = fa.ideology || appState.currentAnalysis?.ideology || {};
+  const hasMessages = hasScrapedMessages();
 
   const intent = (ideo.content_classification || "normal_discussion").toLowerCase();
-  dom.t1IntentPill.textContent = intent.toUpperCase();
-  dom.t1AccountPill.textContent = (ideo.account_type || "human_user").toUpperCase();
+  const accountType = (ideo.account_type || "human_user").toLowerCase();
+  const botProb = Math.round((ideo.bot_probability ?? verdict.scores.ideology ?? 0) * 100);
+
+  // Intent & Account Pills
+  if (!hasMessages) {
+    dom.t1IntentPill.textContent = "NO_MESSAGES";
+    dom.t1AccountPill.textContent = "UNVERIFIED";
+  } else {
+    dom.t1IntentPill.textContent = intent.toUpperCase();
+    dom.t1AccountPill.textContent = accountType.toUpperCase();
+  }
+
+  // Narrative
   dom.t1PatternNarrative.textContent =
     ideo.pattern_description ||
-    "Timeline displays varied discourse across multiple topics with organic lexical entropy.";
+    (hasMessages
+      ? "Timeline displays varied discourse across multiple topics with organic lexical entropy."
+      : "No public messages found in account timeline to evaluate topical narratives or repetitive phrasing.");
 
-  const p = Math.round(verdict.scores.ideology * 100);
-  dom.t1ScorePct.textContent = `${p}%`;
-  dom.t1ScoreBarFill.style.width = `${p}%`;
+  // Verdict Summary Header
+  if (dom.t1VerdictSummary) {
+    if (!hasMessages) {
+      dom.t1VerdictSummary.textContent =
+        "Zero messages available. Ideology and narrative automation evaluation requires scraped posts or comments.";
+    } else if (botProb > 50) {
+      dom.t1VerdictSummary.textContent = `Account messages exhibit indicators of automated ${intent.replace(/_/g, " ")} (${botProb}% ideology risk).`;
+    } else {
+      dom.t1VerdictSummary.textContent = `Account exhibits organic topic diversity and normal human conversational variation (${botProb}% ideology score).`;
+    }
+  }
+
+  // Ideology Automation Score Meter
+  const scoreVal = hasMessages ? botProb : 0;
+  dom.t1ScorePct.textContent = `${scoreVal}%`;
+  dom.t1ScoreBarFill.style.width = `${scoreVal}%`;
 
   // Donut chart of classification
   if (activeCharts.t1Donut) activeCharts.t1Donut.destroy();
   if (dom.chartT1Donut) {
     const ctx = dom.chartT1Donut.getContext("2d");
-    const isSpam = intent === "spam";
-    const isProp = intent === "propaganda";
-    const isDisc = intent === "normal_discussion";
+
+    let donutLabels = [];
+    let donutData = [];
+    let donutColors = [];
+
+    if (!hasMessages) {
+      donutLabels = ["No Messages Found"];
+      donutData = [100];
+      donutColors = ["#334155"];
+    } else {
+      const isHighRisk = botProb > 50;
+      const primaryLabel =
+        intent === "spam"
+          ? "Spam / Promotion"
+          : intent === "propaganda"
+          ? "Propaganda Narrative"
+          : intent === "running_bit"
+          ? "Recurring Persona"
+          : "Organic Discussion";
+
+      if (isHighRisk) {
+        donutLabels = [primaryLabel, "Organic Content"];
+        donutData = [botProb, Math.max(0, 100 - botProb)];
+        donutColors = ["#EF4444", "#334155"];
+      } else {
+        donutLabels = [primaryLabel, "Automation / Risk"];
+        donutData = [Math.max(0, 100 - botProb), botProb];
+        donutColors = ["#3B82F6", "#334155"];
+      }
+    }
 
     activeCharts.t1Donut = new Chart(ctx, {
       type: "doughnut",
       data: {
-        labels: ["Discussion", "Spam", "Propaganda", "Persona"],
+        labels: donutLabels,
         datasets: [
           {
-            data: [
-              isDisc ? 75 : 10,
-              isSpam ? 70 : 10,
-              isProp ? 70 : 10,
-              10,
-            ],
-            backgroundColor: ["#3B82F6", "#60A5FA", "#93C5FD", "#334155"],
+            data: donutData,
+            backgroundColor: donutColors,
             borderWidth: 0,
           },
         ],
@@ -1356,7 +1510,15 @@ function renderTab1Semantic(verdict) {
         plugins: {
           legend: {
             position: "bottom",
-            labels: { boxWidth: 10, font: { size: 12 } },
+            labels: { boxWidth: 10, font: { size: 12 }, color: "#94A3B8" },
+          },
+          tooltip: {
+            callbacks: {
+              label: (context) => {
+                if (!hasMessages) return " No message corpus available to classify";
+                return ` ${context.label}: ${context.parsed}%`;
+              },
+            },
           },
         },
         cutout: "68%",
@@ -1364,38 +1526,42 @@ function renderTab1Semantic(verdict) {
     });
   }
 
-  // Horizontal signals bar chart
-  if (activeCharts.t1Bars) activeCharts.t1Bars.destroy();
-  if (dom.chartT1Bars) {
-    const ctx = dom.chartT1Bars.getContext("2d");
-    activeCharts.t1Bars = new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels: ["Topical Entropy", "Conversational Slang", "Spam Linkage", "Repetitive Phrasing"],
-        datasets: [
-          {
-            data: [p < 35 ? 85 : 20, p < 35 ? 78 : 15, p, p > 50 ? 80 : 12],
-            backgroundColor: [
-              "#2563EB",
-              "#3B82F6",
-              "#60A5FA",
-              "#94A3B8",
-            ],
-            borderRadius: 4,
-          },
-        ],
-      },
-      options: {
-        indexAxis: "y",
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          x: { max: 100, grid: { display: false }, ticks: { display: false } },
-          y: { grid: { display: false }, ticks: { font: { size: 12 } } },
-        },
-        plugins: { legend: { display: false } },
-      },
-    });
+  // Dynamic Forensic Key Indicators (Card 2)
+  if (dom.t1SignalsListBox) {
+    const rawIndicators = Array.isArray(ideo.key_indicators) ? ideo.key_indicators : [];
+
+    if (!hasMessages) {
+      const emptyNotes =
+        rawIndicators.length > 0
+          ? rawIndicators.map((k) => `<li>${escapeHtml(k)}</li>`).join("")
+          : "<li>Account has 0 public posts or comments scraped.</li>";
+      dom.t1SignalsListBox.innerHTML = `
+        <div class="sig-empty-notice">
+          <strong>No Textual Corpus Available</strong>
+          <span>Gemini verified the following constraints from profile metadata:</span>
+          <ul class="sig-empty-bullets">${emptyNotes}</ul>
+        </div>
+      `;
+    } else if (rawIndicators.length === 0) {
+      dom.t1SignalsListBox.innerHTML = `
+        <div class="sig-empty-notice">
+          <strong>No Distinct Signals Flagged</strong>
+          <span>Linguistic analysis did not flag any anomalous narrative patterns or automated spam signatures.</span>
+        </div>
+      `;
+    } else {
+      dom.t1SignalsListBox.innerHTML = rawIndicators
+        .map((indicator, idx) => {
+          const num = String(idx + 1).padStart(2, "0");
+          return `
+            <div class="sig-item">
+              <span class="sig-index">SIGNAL ${num}</span>
+              <p class="sig-text">${escapeHtml(indicator)}</p>
+            </div>
+          `;
+        })
+        .join("");
+    }
   }
 }
 
@@ -1404,28 +1570,68 @@ function renderTab1Semantic(verdict) {
 function renderTab2AiAuth(verdict) {
   const fa = appState.currentAnalysis?.full_analysis || {};
   const ai = fa.ai_authenticity || appState.currentAnalysis?.ai_authenticity || {};
+  const hasMessages = hasScrapedMessages();
 
+  const aiProb = Math.round((ai.ai_probability ?? verdict.scores.aigen ?? 0) * 100);
+  const isAi = hasMessages && (ai.is_ai_generated || aiProb > 50);
+
+  // Reasoning narrative
   dom.t2ReasoningParagraph.textContent =
-    ai.reasoning || "Natural phrasing and human conversational variances observed.";
+    ai.reasoning ||
+    (hasMessages
+      ? "Natural phrasing and human conversational variances observed."
+      : "There is no input text available to evaluate.");
 
-  const aiProb = Math.round(verdict.scores.aigen * 100);
-  const isAi = ai.is_ai_generated || aiProb > 50;
+  // Verdict Summary Header
+  if (dom.t2VerdictSummary) {
+    if (!hasMessages) {
+      dom.t2VerdictSummary.textContent =
+        "Zero messages sampled. Linguistic syntax evaluation requires post or comment text.";
+    } else if (isAi) {
+      dom.t2VerdictSummary.textContent = `Structural syntax indicates Large Language Model generation (${aiProb}% synthetic likelihood).`;
+    } else {
+      dom.t2VerdictSummary.textContent = `Structural syntax demonstrates authentic human tone, colloquial phrasing, and emotional cadence (${100 - aiProb}% human probability).`;
+    }
+  }
 
-  dom.t2AiStatusName.textContent = isAi ? "SYNTHETIC MARKERS DETECTED" : "ORGANIC HUMAN WRITING";
-  dom.t2AiStatusIndicator.style.color = isAi ? "var(--risk-bot)" : "var(--risk-human)";
+  // Status Indicator
+  if (!hasMessages) {
+    dom.t2AiStatusName.textContent = "INSUFFICIENT TEXT DATA";
+    dom.t2AiStatusIndicator.style.color = "var(--text-muted)";
+  } else {
+    dom.t2AiStatusName.textContent = isAi
+      ? "SYNTHETIC MARKERS DETECTED"
+      : "ORGANIC HUMAN WRITING";
+    dom.t2AiStatusIndicator.style.color = isAi ? "var(--risk-bot)" : "var(--risk-human)";
+  }
 
   // Gauge Donut Chart
   if (activeCharts.t2Gauge) activeCharts.t2Gauge.destroy();
   if (dom.chartT2Gauge) {
     const ctx = dom.chartT2Gauge.getContext("2d");
+
+    let gaugeLabels = [];
+    let gaugeData = [];
+    let gaugeColors = [];
+
+    if (!hasMessages) {
+      gaugeLabels = ["No Text Sampled"];
+      gaugeData = [100];
+      gaugeColors = ["#334155"];
+    } else {
+      gaugeLabels = ["Human Likelihood", "Synthetic AI Likelihood"];
+      gaugeData = [Math.max(0, 100 - aiProb), aiProb];
+      gaugeColors = [isAi ? "#334155" : "#10B981", isAi ? "#EF4444" : "#334155"];
+    }
+
     activeCharts.t2Gauge = new Chart(ctx, {
       type: "doughnut",
       data: {
-        labels: ["AI Probability", "Human Probability"],
+        labels: gaugeLabels,
         datasets: [
           {
-            data: [aiProb, 100 - aiProb],
-            backgroundColor: [isAi ? "#2563EB" : "#3B82F6", "#E2E8F0"],
+            data: gaugeData,
+            backgroundColor: gaugeColors,
             borderWidth: 0,
           },
         ],
@@ -1436,12 +1642,97 @@ function renderTab2AiAuth(verdict) {
         plugins: {
           legend: {
             position: "bottom",
-            labels: { boxWidth: 10, font: { size: 12 } },
+            labels: { boxWidth: 10, font: { size: 12 }, color: "#94A3B8" },
+          },
+          tooltip: {
+            callbacks: {
+              label: (context) => {
+                if (!hasMessages) return " Zero posts available to evaluate";
+                return ` ${context.label}: ${context.parsed}%`;
+              },
+            },
           },
         },
         cutout: "70%",
       },
     });
+  }
+
+  // Hallmarks Checklist (Card 2)
+  if (dom.t2HallmarksList) {
+    if (!hasMessages) {
+      dom.t2HallmarksList.innerHTML = `
+        <div class="hm-empty-notice">
+          <span class="hm-empty-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </span>
+          <div class="hm-empty-text">
+            <strong>Hallmarks Evaluation Disabled</strong>
+            <p>No posts or comments were available in this account's public timeline to evaluate for LLM generation hallmarks.</p>
+          </div>
+        </div>
+      `;
+    } else if (isAi) {
+      dom.t2HallmarksList.innerHTML = `
+        <div class="hm-item hm-item--flagged">
+          <span class="hm-icon flagged">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </span>
+          <div class="hm-text">
+            <strong>Formulaic Paragraph Architecture</strong>
+            <small>Rigid symmetry, uniform sentence length, and structured explanatory tone</small>
+          </div>
+        </div>
+        <div class="hm-item hm-item--flagged">
+          <span class="hm-icon flagged">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </span>
+          <div class="hm-text">
+            <strong>Synthetic Transitional Fillers</strong>
+            <small>Repetitive use of formal bridges and neutral balanced summaries</small>
+          </div>
+        </div>
+        <div class="hm-item hm-item--flagged">
+          <span class="hm-icon flagged">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </span>
+          <div class="hm-text">
+            <strong>Absence of Genuine Human Voice</strong>
+            <small>Lacks personal anecdotes, typos, colloquialisms, or spontaneous emotion</small>
+          </div>
+        </div>
+      `;
+    } else {
+      dom.t2HallmarksList.innerHTML = `
+        <div class="hm-item">
+          <span class="hm-icon">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          <div class="hm-text">
+            <strong>Organic Conversational Phrasing</strong>
+            <small>Natural informal syntax, colloquial expressions, and authentic typos</small>
+          </div>
+        </div>
+        <div class="hm-item">
+          <span class="hm-icon">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          <div class="hm-text">
+            <strong>Absence of Rigid Transitional Phrases</strong>
+            <small>Free of robotic bridges ("Furthermore", "In conclusion", "It is important to note")</small>
+          </div>
+        </div>
+        <div class="hm-item">
+          <span class="hm-icon">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          <div class="hm-text">
+            <strong>Contextual Nuance &amp; Idiosyncrasy</strong>
+            <small>Subjective personal anecdotes, idiosyncratic opinions, and varied emotional cadence</small>
+          </div>
+        </div>
+      `;
+    }
   }
 }
 
@@ -1450,91 +1741,168 @@ function renderTab2AiAuth(verdict) {
 function renderTab3Cadence(verdict) {
   const fa = appState.currentAnalysis?.full_analysis || {};
   const freqData = fa.frequency || appState.currentAnalysis?.frequency || {};
+  const cadenceFeatures = appState.currentFormattedData?.cadence_features || {};
+  const rhythmFeatures = appState.currentFormattedData?.rhythm_features || {};
 
-  // Normalize bot probability to a 0-100 scale
+  // Extract raw timestamps
+  const rawTimes =
+    appState.currentFormattedData?.full_timestamp_timeline ||
+    appState.currentRawData?.full_timestamp_timeline ||
+    (appState.currentRawData?.timeline || []).map((t) => t.timestamp).filter(Boolean);
+
+  let totalPosts = 0;
+  let spanDays = 0;
+  let uniqueDays = 0;
+
+  if (rawTimes && rawTimes.length > 0) {
+    totalPosts = rawTimes.length;
+    const sorted = [...rawTimes].sort((a, b) => a - b);
+    spanDays = Math.max(1, (sorted[sorted.length - 1] - sorted[0]) / 86400);
+    const daySet = new Set(sorted.map((t) => new Date(t * 1000).toISOString().slice(0, 10)));
+    uniqueDays = Math.max(1, daySet.size);
+  } else if (rhythmFeatures.total_posts > 0) {
+    totalPosts = rhythmFeatures.total_posts;
+  }
+
+  // Multi-factor features
+  const postsPerDay = uniqueDays > 0 ? (totalPosts / uniqueDays) : 0;
+  const burstRatio = cadenceFeatures.burst_ratio ?? 0;
+  const quietWindow = cadenceFeatures.quiet_window_hours ?? 0;
+  const commentRatio = cadenceFeatures.comment_ratio ?? 0.5;
+
+  // Normalize bot probability (0 - 100%)
   let cadenceBotProb = 0;
   if (typeof freqData.bot_probability === "number") {
-    cadenceBotProb = freqData.bot_probability <= 1.0 
-      ? freqData.bot_probability * 100 
+    cadenceBotProb = freqData.bot_probability <= 1.0
+      ? freqData.bot_probability * 100
       : freqData.bot_probability;
   }
 
-  // Handle formatted frequency value for bullet chart
-  const freqVal =
-    appState.currentFormattedData?.frequency_data ??
-    appState.currentRawData?.rhythm_features_7_day_basis?.posting_frequency_days ??
-    0;
-
-  if (dom.t3FrequencyNum) dom.t3FrequencyNum.textContent = Number(freqVal).toFixed(2);
-  if (dom.t3TotalPosts) dom.t3TotalPosts.textContent = dom.profilePostsStat.textContent.split(" ")[0] || "100";
-  
-  // Set the 0-100% formatted probability string
-  if (dom.t3ModelProb) dom.t3ModelProb.textContent = `${cadenceBotProb.toFixed(1)}%`;
-
-  // Display Cadence classification verdict
-  const prediction = freqData.prediction ? freqData.prediction.toUpperCase() : "UNKNOWN";
-  if (dom.t3CadenceVerdict) {
-    dom.t3CadenceVerdict.textContent = prediction;
-    
-    if (freqVal < 0.1 || prediction === "BOT") {
-      dom.t3CadenceVerdict.style.color = "var(--risk-bot)";
-    } else if (freqVal <= 3.0) {
-      dom.t3CadenceVerdict.style.color = "var(--risk-human)";
+  // 1. Update Left Card: Timeline Ribbon Stats
+  if (dom.t3TotalPosts) dom.t3TotalPosts.textContent = totalPosts;
+  if (dom.t3TimelineTimespan) {
+    if (totalPosts === 0) {
+      dom.t3TimelineTimespan.textContent = "0 days";
     } else {
-      dom.t3CadenceVerdict.style.color = "var(--risk-human)";
+      dom.t3TimelineTimespan.textContent = spanDays < 30
+        ? `${Math.round(spanDays)} days`
+        : `${(spanDays / 30.4).toFixed(1)} mos`;
     }
   }
-  
-  // Update status summary text if available
+  if (dom.t3TimelineActiveDays) dom.t3TimelineActiveDays.textContent = `${uniqueDays} days`;
+  if (dom.t3FrequencyNum) dom.t3FrequencyNum.textContent = `${postsPerDay.toFixed(1)}/day`;
+
+  // 2. Update Right Card: Hero Model Verdict
+  if (dom.t3ModelProb) dom.t3ModelProb.textContent = `${cadenceBotProb.toFixed(1)}%`;
+
+  const prediction = freqData.prediction ? freqData.prediction.toUpperCase() : "HUMAN";
+  const isBot = cadenceBotProb > 65 || prediction === "BOT";
+  const isUncertain = cadenceBotProb >= 35 && cadenceBotProb <= 65;
+
+  if (dom.t3CadenceVerdict) {
+    if (totalPosts === 0) {
+      dom.t3CadenceVerdict.textContent = "NO DATA";
+      dom.t3CadenceVerdict.style.color = "var(--text-muted)";
+      dom.t3CadenceVerdict.style.background = "rgba(255, 255, 255, 0.05)";
+      dom.t3CadenceVerdict.style.borderColor = "var(--card-border)";
+    } else {
+      dom.t3CadenceVerdict.textContent = prediction;
+      if (isBot) {
+        dom.t3CadenceVerdict.style.color = "#EF4444";
+        dom.t3CadenceVerdict.style.background = "rgba(239, 68, 68, 0.15)";
+        dom.t3CadenceVerdict.style.borderColor = "rgba(239, 68, 68, 0.4)";
+      } else if (isUncertain) {
+        dom.t3CadenceVerdict.style.color = "#F59E0B";
+        dom.t3CadenceVerdict.style.background = "rgba(245, 158, 11, 0.15)";
+        dom.t3CadenceVerdict.style.borderColor = "rgba(245, 158, 11, 0.4)";
+      } else {
+        dom.t3CadenceVerdict.style.color = "#10B981";
+        dom.t3CadenceVerdict.style.background = "rgba(16, 185, 129, 0.15)";
+        dom.t3CadenceVerdict.style.borderColor = "rgba(16, 185, 129, 0.4)";
+      }
+    }
+  }
+
+  // 3. Update Multi-Feature Meters (Unbiased Data Representation)
+  const burstPct = burstRatio * 100;
+  if (dom.t3FeatBurst) dom.t3FeatBurst.textContent = `${burstPct.toFixed(1)}%`;
+  if (dom.t3BarBurst) dom.t3BarBurst.style.width = `${Math.min(100, Math.max(4, burstPct))}%`;
+
+  if (dom.t3FeatQuiet) dom.t3FeatQuiet.textContent = `${Number(quietWindow).toFixed(1)} hrs`;
+  if (dom.t3BarQuiet) dom.t3BarQuiet.style.width = `${Math.min(100, Math.max(4, (quietWindow / 24) * 100))}%`;
+
+  if (dom.t3FeatDensity) dom.t3FeatDensity.textContent = `${postsPerDay.toFixed(1)} posts/day`;
+  if (dom.t3BarDensity) dom.t3BarDensity.style.width = `${Math.min(100, Math.max(4, (postsPerDay / 15) * 100))}%`;
+
+  const commPct = commentRatio * 100;
+  if (dom.t3FeatComment) dom.t3FeatComment.textContent = `${commPct.toFixed(0)}% comments`;
+  if (dom.t3BarComment) dom.t3BarComment.style.width = `${Math.min(100, Math.max(4, commPct))}%`;
+
   if (dom.t3VerdictSummary && freqData.status) {
     dom.t3VerdictSummary.textContent = freqData.status;
   }
 
-  // Needle positioning on bullet chart
-  if (dom.t3BenchmarkNeedle) {
-    let needlePct = 50;
-    if (freqVal < 0.1) needlePct = Math.max(5, (freqVal / 0.1) * 20);
-    else if (freqVal <= 2.0) needlePct = 20 + ((freqVal - 0.1) / 1.9) * 40;
-    else needlePct = Math.min(95, 60 + ((freqVal - 2.0) / 10.0) * 35);
-    dom.t3BenchmarkNeedle.style.left = `${needlePct}%`;
-  }
-
-  // Timeline Activity Area Chart
+  // 4. Render Wide Responsive Activity Over Time Chart
   if (activeCharts.t3Timeline) activeCharts.t3Timeline.destroy();
   if (dom.chartT3Timeline) {
     const ctx = dom.chartT3Timeline.getContext("2d");
-    const rawTimes =
-      appState.currentRawData?.full_timestamp_timeline ||
-      (appState.currentRawData?.timeline || []).map((t) => t.timestamp).filter(Boolean);
 
-    // Group timestamps by day index
-    const dayCounts = new Array(7).fill(0);
+    let bucketLabels = [];
+    let bucketCounts = [];
+
     if (rawTimes && rawTimes.length > 0) {
-      const minTs = Math.min(...rawTimes);
-      const maxTs = Math.max(...rawTimes);
-      const span = Math.max(1, maxTs - minTs);
-      rawTimes.forEach((ts) => {
-        const dIdx = Math.min(6, Math.floor(((ts - minTs) / span) * 7));
-        dayCounts[dIdx]++;
+      const sorted = [...rawTimes].sort((a, b) => a - b);
+      const minTs = sorted[0];
+      const maxTs = sorted[sorted.length - 1];
+
+      let bucketSec;
+      if (spanDays <= 14) {
+        bucketSec = 86400;          // daily
+      } else if (spanDays <= 90) {
+        bucketSec = 7 * 86400;      // weekly
+      } else {
+        bucketSec = 14 * 86400;     // bi-weekly
+      }
+
+      const bucketCount = Math.max(1, Math.ceil((maxTs - minTs) / bucketSec));
+      const capped = Math.min(bucketCount, 24);
+      const effectiveBucketSec = (maxTs - minTs) / capped;
+
+      bucketCounts = new Array(capped).fill(0);
+      bucketLabels = [];
+
+      for (let i = 0; i < capped; i++) {
+        const bucketStart = minTs + i * effectiveBucketSec;
+        const d = new Date(bucketStart * 1000);
+        const mo = d.toLocaleString("default", { month: "short" });
+        bucketLabels.push(`${mo} ${d.getUTCDate()}`);
+      }
+
+      sorted.forEach((ts) => {
+        const idx = Math.min(capped - 1, Math.floor((ts - minTs) / effectiveBucketSec));
+        bucketCounts[idx]++;
       });
     } else {
-      [8, 14, 12, 19, 15, 22, 10].forEach((v, i) => (dayCounts[i] = v));
+      bucketLabels = ["No Scraped Activity"];
+      bucketCounts = [0];
     }
 
     const colors = getPlatformColors();
+
     activeCharts.t3Timeline = new Chart(ctx, {
       type: "line",
       data: {
-        labels: ["Day 1", "Day 2", "Day 3", "Day 4", "Day 5", "Day 6", "Day 7"],
+        labels: bucketLabels,
         datasets: [
           {
-            label: "Actions Volume",
-            data: dayCounts,
-            borderColor: colors.primary,
-            backgroundColor: colors.primaryAlpha,
+            label: "Actions (Posts & Comments)",
+            data: bucketCounts,
+            borderColor: totalPosts > 0 ? colors.primary : "rgba(255, 255, 255, 0.2)",
+            backgroundColor: totalPosts > 0 ? colors.primaryAlpha : "rgba(255, 255, 255, 0.02)",
             fill: true,
             tension: 0.35,
-            pointRadius: 4,
+            pointRadius: totalPosts > 0 ? 4 : 0,
+            pointHoverRadius: totalPosts > 0 ? 6 : 0,
           },
         ],
       },
@@ -1542,10 +1910,42 @@ function renderTab3Cadence(verdict) {
         responsive: true,
         maintainAspectRatio: false,
         scales: {
-          x: { grid: { display: false }, ticks: { font: { size: 12 } } },
-          y: { grid: { color: "rgba(255,255,255,0.06)" }, ticks: { font: { size: 12 } } },
+          x: {
+            grid: { display: false },
+            ticks: {
+              font: { size: 11 },
+              maxRotation: 40,
+              autoSkip: true,
+              maxTicksLimit: 12,
+            },
+            title: {
+              display: true,
+              text: "Timeline (UTC)",
+              font: { size: 11 },
+            },
+          },
+          y: {
+            grid: { color: "rgba(255,255,255,0.06)" },
+            ticks: { font: { size: 11 }, precision: 0 },
+            title: {
+              display: true,
+              text: "Actions Count",
+              font: { size: 11 },
+            },
+            beginAtZero: true,
+            suggestedMax: totalPosts > 0 ? undefined : 5,
+          },
         },
-        plugins: { legend: { display: false } },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            enabled: totalPosts > 0,
+            callbacks: {
+              title: (items) => `Period starting ${items[0].label}`,
+              label: (item) => ` ${item.raw} post${item.raw !== 1 ? "s" : ""} / comment${item.raw !== 1 ? "s" : ""}`,
+            },
+          },
+        },
       },
     });
   }
@@ -1568,35 +1968,113 @@ function renderTab4Rhythm(verdict) {
       : `${Number(sleepHrs).toFixed(1)} hrs`;
 
   const medianSec = rf.median_gap_seconds || 0;
-  dom.t4MedianGapVal.textContent =
-    medianSec > 3600
-      ? `${(medianSec / 3600).toFixed(1)} hrs`
-      : `${Math.round(medianSec / 60)} mins`;
+  if (medianSec >= 86400) {
+    dom.t4MedianGapVal.textContent = `${(medianSec / 86400).toFixed(1)} days (${(medianSec / 3600).toFixed(0)} hrs)`;
+  } else if (medianSec >= 3600) {
+    dom.t4MedianGapVal.textContent = `${(medianSec / 3600).toFixed(1)} hrs`;
+  } else {
+    dom.t4MedianGapVal.textContent = `${Math.round(medianSec / 60)} mins`;
+  }
 
+  // ── Resolve timestamps and build parsed date records ──
   const rawTimes =
+    appState.currentFormattedData?.full_timestamp_timeline ||
     appState.currentRawData?.full_timestamp_timeline ||
     (appState.currentRawData?.timeline || []).map((t) => t.timestamp).filter(Boolean);
 
-  // 24-Hour Circadian Bar Chart (UTC)
+  const parsedEntries = rawTimes.map((ts) => {
+    const d = new Date(ts * 1000);
+    const monthKey = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+    const monthName = d.toLocaleString("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
+    const dayShort = d.toLocaleString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+    const dateStr = d.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+    return {
+      ts,
+      d,
+      monthKey,
+      monthName,
+      dayShort,
+      dateStr,
+      weekday: (d.getUTCDay() + 6) % 7, // Mon=0..Sun=6
+      hour: d.getUTCHours(),
+    };
+  });
+
+  // Populate observed lifespan info banner
+  if (parsedEntries.length > 0) {
+    const sorted = [...parsedEntries].sort((a, b) => a.ts - b.ts);
+    const firstD = sorted[0].d;
+    const lastD = sorted[sorted.length - 1].d;
+    const firstStr = firstD.toLocaleString("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
+    const lastStr = lastD.toLocaleString("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
+    const uniqueDates = new Set(sorted.map((e) => e.dateStr));
+    if (dom.t4ObservedSpan) dom.t4ObservedSpan.textContent = `${firstStr} – ${lastStr}`;
+    if (dom.t4ObservedDaysBadge) dom.t4ObservedDaysBadge.textContent = `${uniqueDates.size} active days (${rawTimes.length} total actions)`;
+  } else {
+    if (dom.t4ObservedSpan) dom.t4ObservedSpan.textContent = "None";
+    if (dom.t4ObservedDaysBadge) dom.t4ObservedDaysBadge.textContent = "0 active days (0 actions)";
+  }
+
+  // Populate Month Filter Dropdown
+  if (dom.t4MonthFilter) {
+    if (parsedEntries.length === 0) {
+      dom.t4MonthFilter.innerHTML = `<option value="ALL">No Activity Recorded</option>`;
+    } else {
+      const monthCounts = {};
+      parsedEntries.forEach((e) => {
+        if (!monthCounts[e.monthKey]) monthCounts[e.monthKey] = { name: e.monthName, count: 0 };
+        monthCounts[e.monthKey].count++;
+      });
+
+      const currentVal = dom.t4MonthFilter.value || "ALL";
+      dom.t4MonthFilter.innerHTML = `<option value="ALL">All Time (${parsedEntries.length} total actions)</option>`;
+
+      const sortedMonths = Object.keys(monthCounts).sort().reverse();
+      sortedMonths.forEach((mKey) => {
+        const m = monthCounts[mKey];
+        const opt = document.createElement("option");
+        opt.value = mKey;
+        opt.textContent = `${m.name} (${m.count} action${m.count !== 1 ? "s" : ""})`;
+        dom.t4MonthFilter.appendChild(opt);
+      });
+
+      if (currentVal && dom.t4MonthFilter.querySelector(`option[value="${currentVal}"]`)) {
+        dom.t4MonthFilter.value = currentVal;
+      }
+    }
+
+    dom.t4MonthFilter.onchange = () => {
+      renderTab4Rhythm(verdict);
+    };
+  }
+
+  // Filter entries if a specific month is selected
+  const selectedMonth = dom.t4MonthFilter ? dom.t4MonthFilter.value : "ALL";
+  const activeEntries = (selectedMonth && selectedMonth !== "ALL")
+    ? parsedEntries.filter((e) => e.monthKey === selectedMonth)
+    : parsedEntries;
+
+  // 1. 24-Hour Circadian Bar Chart (UTC)
   if (activeCharts.t4Circadian) activeCharts.t4Circadian.destroy();
   if (dom.chartT4Circadian) {
     const ctx = dom.chartT4Circadian.getContext("2d");
     const hourCounts = new Array(24).fill(0);
+    const hourDatesMap = Array.from({ length: 24 }, () => ({}));
 
-    if (rawTimes && rawTimes.length > 0) {
-      rawTimes.forEach((ts) => {
-        const d = new Date(ts * 1000);
-        const h = d.getUTCHours();
-        if (h >= 0 && h < 24) hourCounts[h]++;
+    if (activeEntries.length > 0) {
+      activeEntries.forEach((e) => {
+        hourCounts[e.hour]++;
+        hourDatesMap[e.hour][e.dayShort] = (hourDatesMap[e.hour][e.dayShort] || 0) + 1;
       });
-    } else {
-      [1, 0, 0, 0, 1, 2, 5, 8, 12, 14, 15, 11, 10, 12, 14, 16, 15, 13, 9, 6, 4, 2, 1, 1].forEach(
-        (v, i) => (hourCounts[i] = v)
-      );
     }
 
-    const hourLabels = Array.from({ length: 24 }, (_, i) => `${i}h`);
     const colors = getPlatformColors();
+    const barColors = hourCounts.map((_, i) => {
+      if (i >= 0 && i < 6) return "rgba(148, 163, 184, 0.4)"; // night — dim
+      return colors.primary;
+    });
+
+    const hourLabels = Array.from({ length: 24 }, (_, i) => `${i}:00`);
 
     activeCharts.t4Circadian = new Chart(ctx, {
       type: "bar",
@@ -1605,7 +2083,7 @@ function renderTab4Rhythm(verdict) {
         datasets: [
           {
             data: hourCounts,
-            backgroundColor: colors.primary,
+            backgroundColor: barColors,
             borderRadius: 4,
           },
         ],
@@ -1617,36 +2095,70 @@ function renderTab4Rhythm(verdict) {
           x: {
             grid: { display: false },
             ticks: {
-              font: { size: 12 },
-              callback: (v, idx) => (idx % 4 === 0 ? hourLabels[idx] : ""),
+              font: { size: 10 },
+              maxRotation: 0,
+              callback: (v, idx) => (idx % 3 === 0 ? `${idx}h` : ""),
+            },
+            title: {
+              display: true,
+              text: "Hour of Day (UTC)",
+              font: { size: 11 },
             },
           },
-          y: { grid: { color: "rgba(255,255,255,0.06)" }, ticks: { font: { size: 12 } } },
+          y: {
+            grid: { color: "rgba(255,255,255,0.06)" },
+            ticks: { font: { size: 11 }, precision: 0 },
+            title: {
+              display: true,
+              text: "Actions Count",
+              font: { size: 11 },
+            },
+            beginAtZero: true,
+          },
         },
-        plugins: { legend: { display: false } },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              title: (items) => `Hour ${items[0].label} UTC`,
+              label: (item) => ` ${item.raw} action${item.raw !== 1 ? "s" : ""}`,
+              afterLabel: (item) => {
+                const h = parseInt(item.label);
+                const dateMap = hourDatesMap[h] || {};
+                const dateEntries = Object.entries(dateMap);
+                if (dateEntries.length === 0) return "";
+                const dateList = dateEntries
+                  .map(([dStr, cnt]) => `${dStr} (${cnt})`)
+                  .slice(0, 4)
+                  .join(", ");
+                return `Dates: ${dateList}${dateEntries.length > 4 ? "..." : ""}`;
+              },
+            },
+          },
+        },
       },
     });
   }
 
-  // Day x Hour Heatmap Matrix Render (Real 7-Day x 4-Block Activity Density)
+  // 2. Day x Hour Heatmap Matrix Render
   if (dom.t4HeatmapMatrix) {
     dom.t4HeatmapMatrix.innerHTML = "";
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const blockLabels = [
-      "00:00 - 06:00 UTC (Night / Sleep Window)",
-      "06:00 - 12:00 UTC (Morning)",
-      "12:00 - 18:00 UTC (Afternoon)",
-      "18:00 - 24:00 UTC (Evening)",
+      "Night (00:00 - 06:00 UTC)",
+      "Morning (06:00 - 12:00 UTC)",
+      "Afternoon (12:00 - 18:00 UTC)",
+      "Evening (18:00 - 24:00 UTC)",
     ];
 
     const matrix = Array.from({ length: 7 }, () => [0, 0, 0, 0]);
-    if (rawTimes && rawTimes.length > 0) {
-      rawTimes.forEach((ts) => {
-        const d = new Date(ts * 1000);
-        const day = (d.getUTCDay() + 6) % 7; // Mon=0..Sun=6
-        const hour = d.getUTCHours();
-        const block = Math.min(3, Math.floor(hour / 6));
-        matrix[day][block]++;
+    const cellDatesMap = Array.from({ length: 7 }, () => [{}, {}, {}, {}]);
+
+    if (activeEntries.length > 0) {
+      activeEntries.forEach((e) => {
+        const block = Math.min(3, Math.floor(e.hour / 6));
+        matrix[e.weekday][block]++;
+        cellDatesMap[e.weekday][block][e.dayShort] = (cellDatesMap[e.weekday][block][e.dayShort] || 0) + 1;
       });
     }
 
@@ -1674,7 +2186,14 @@ function renderTab4Rhythm(verdict) {
           }
         }
         cell.className = `hm-cell ${lvl > 0 ? `level-${lvl}` : "level-0"}`;
-        cell.title = `${day} · ${blockLabels[b]}: ${count} post${count === 1 ? "" : "s"}`;
+
+        const dMap = cellDatesMap[di][b] || {};
+        const dEntries = Object.entries(dMap);
+        const dateSummary = dEntries.length > 0
+          ? "\nActive Dates: " + dEntries.map(([dStr, cnt]) => `${dStr} (${cnt})`).slice(0, 5).join(", ")
+          : "";
+
+        cell.title = `${day} · ${blockLabels[b]}: ${count} action${count === 1 ? "" : "s"}${dateSummary}`;
         col.appendChild(cell);
       }
       dom.t4HeatmapMatrix.appendChild(col);
@@ -1934,6 +2453,15 @@ function activateTab(tabId, updateRoute = true) {
     dom.paramPanels.forEach((panel) => {
       panel.classList.toggle("active", panel.id === `tab-panel-${tabId}`);
     });
+  }
+
+  // Ensure active panel charts are rendered with proper dimensions once visible
+  if (appState.currentAnalysis) {
+    const verdict = computeWeightedVerdict(appState.currentAnalysis);
+    if (tabId === "param1") renderTab1Semantic(verdict);
+    else if (tabId === "param2") renderTab2AiAuth(verdict);
+    else if (tabId === "param3") renderTab3Cadence(verdict);
+    else if (tabId === "param4") renderTab4Rhythm(verdict);
   }
 
   updateSlidingTabIndicator();

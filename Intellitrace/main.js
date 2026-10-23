@@ -182,21 +182,45 @@ ipcMain.handle("reddit-login", async () => {
 ipcMain.on("run-scraper", (event, { username }) => {
   const execName = process.platform === "win32" ? "Scrapingtool.exe" : "Scrapingtool";
   const exePath = getResourcePath("Scrapingtool", execName);
+  let command = exePath;
+  let args = [username];
+
+  if (!fs.existsSync(exePath) && !app.isPackaged) {
+    const backendDir = path.resolve(__dirname, "..", "Backend");
+    const scriptPath = path.join(backendDir, "Scrapingtool.py");
+    const pythonPaths = process.platform === "win32"
+      ? ["venv/Scripts/python.exe", ".venv/Scripts/python.exe"]
+      : ["venv/bin/python", ".venv/bin/python"];
+    const pythonPath = pythonPaths
+      .map((relativePath) => path.join(backendDir, relativePath))
+      .find((candidate) => fs.existsSync(candidate));
+
+    if (fs.existsSync(scriptPath) && pythonPath) {
+      command = pythonPath;
+      args = [scriptPath, username];
+    } else {
+      event.sender.send("scraper-event", {
+        event: "error",
+        data: `Scraper executable not found at:\n${exePath}\n\nFor development, ensure Backend/Scrapingtool.py and a Backend virtual environment are present.`,
+      });
+      return;
+    }
+  }
 
   console.log(`\n[SCRAPER] Launching for target: ${username}`);
-  console.log(`[SCRAPER] Executable path: ${exePath}`);
+  console.log(`[SCRAPER] Command: ${command}`);
   console.log(`[SCRAPER] Working directory: ${userStorageDir}`);
 
-  if (!fs.existsSync(exePath)) {
-    console.error(`[SCRAPER ERROR] Executable NOT FOUND at ${exePath}`);
+  if (!fs.existsSync(command)) {
+    console.error(`[SCRAPER ERROR] Executable NOT FOUND at ${command}`);
     event.sender.send("scraper-event", {
       event: "error",
-      data: `${execName} not found at:\n${exePath}`,
+      data: `${execName} not found at:\n${command}`,
     });
     return;
   }
 
-  const proc = spawn(exePath, [username], {
+  const proc = spawn(command, args, {
     cwd: userStorageDir,
     env: { ...process.env, PYTHONIOENCODING: "utf-8" },
   });

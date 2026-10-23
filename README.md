@@ -84,9 +84,10 @@ From the repository root, open a terminal:
 
 ```powershell
 cd Backend
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
+py -m venv venv
+.\venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
+python -m playwright install chromium
 ```
 
 Create `Backend/.env` and configure the required values:
@@ -116,7 +117,7 @@ npm install
 npm start
 ```
 
-Before running an analysis, confirm that the backend is available and the expected scraper executable exists under `Intellitrace/Scrapingtool/`.
+In development, the Electron app runs `Backend/Scrapingtool.py` using the backend virtual environment, so a separately built scraper executable is not required. Playwright's Chromium browser must be installed with the command above. For packaged builds, place the platform-specific scraper executable in `Intellitrace/Scrapingtool/`.
 
 ---
 

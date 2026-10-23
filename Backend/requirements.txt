@@ -1,6 +1,7 @@
 xgboost
 fastapi
 uvicorn
+playwright
 pydantic
 google-genai
 python-dotenv
