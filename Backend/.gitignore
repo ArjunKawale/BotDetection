@@ -4,4 +4,7 @@ __pycache__/
 build/
 
 UserData/
-chromium-1228/
+chromium-1248/
+venv/
+reddit_state.json
+.debug_artifacts/

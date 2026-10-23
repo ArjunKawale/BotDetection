@@ -1,0 +1,112 @@
+10:13:32 INFO    Trying backend 'oauth' for /u/Plus-Affect-6365
+10:13:32 INFO    Backend 'oauth' failed: oauth_not_configured: set REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET and REDDIT_USER_AGENT
+10:13:32 INFO    Trying backend 'html' for /u/Plus-Affect-6365
+10:13:32 INFO    [html] using bundled Chromium: /home/ak/Projects/botdetection/Backend/chromium-1228/chrome-linux64/chrome
+10:13:32 INFO    [html] browser launched (version 149.0.7827.55)
+10:13:35 INFO    [html] page 1 HTTP 403 in 2.43s, 0 items, final url https://old.reddit.com/login/?reason=lor2&dest=https%3A%2F%2Fold.reddit.com%2Fuser%2FPlus-Affect-6365%2F
+10:13:35 ERROR   [html] debug artifacts saved: debug_artifacts/Plus-Affect-6365_1791089015_http_403_blocked.{png,html}
+10:13:35 ERROR   Backend 'html' failed: http_403_blocked: on https://old.reddit.com/login/?reason=lor2&dest=https%3A%2F%2Fold.reddit.com%2Fuser%2FPlus-Affect-6365%2F
+10:13:35 ERROR   Reddit is refusing unauthenticated access from this IP. Code changes won't fix that; use the OAuth backend, a different network, or a non-Reddit source.
+10:13:35 ERROR   No data collected for /u/Plus-Affect-6365 (3.1s). Nothing written.
+10:19:22 INFO    No saved session at reddit_state.json; starting one-time login.
+10:19:22 INFO    Using bundled Chromium: /home/ak/Projects/botdetection/Backend/chromium-1228/chrome-linux64/chrome
+10:19:23 INFO    [login] opening reddit.com/login in a visible browser window
+10:19:23 INFO    [login] log in to your (throwaway) account in that window, solving any CAPTCHA/2FA.
+10:19:48 ERROR   Login crashed
+Traceback (most recent call last):
+  File "/home/ak/Projects/botdetection/Backend/webscraper.py", line 569, in main
+    interactive_login(args.state)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "/home/ak/Projects/botdetection/Backend/webscraper.py", line 359, in interactive_login
+    asyncio.run(_interactive_login_async(state_path))
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/asyncio/runners.py", line 205, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.14/asyncio/runners.py", line 128, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/home/ak/Projects/botdetection/Backend/webscraper.py", line 355, in _interactive_login_async
+    await browser.close()
+  File "/home/ak/Projects/botdetection/Backend/venv/lib/python3.14/site-packages/playwright/async_api/_generated.py", line 16273, in close
+    return mapping.from_maybe_impl(await self._impl_obj.close(reason=reason))
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ak/Projects/botdetection/Backend/venv/lib/python3.14/site-packages/playwright/_impl/_browser.py", line 244, in close
+    raise e
+  File "/home/ak/Projects/botdetection/Backend/venv/lib/python3.14/site-packages/playwright/_impl/_browser.py", line 241, in close
+    await self._channel.send("close", None, {"reason": reason})
+  File "/home/ak/Projects/botdetection/Backend/venv/lib/python3.14/site-packages/playwright/_impl/_connection.py", line 69, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/home/ak/Projects/botdetection/Backend/venv/lib/python3.14/site-packages/playwright/_impl/_connection.py", line 563, in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+Exception: Browser.close: Connection closed while reading from the driver
+10:27:12 ERROR   Real-browser setup failed: browser_not_found: no Chrome/Chromium on PATH; pass --real-browser /path/to/browser
+10:29:08 INFO    [real-browser] no system Chrome/Chromium on PATH; using the bundled Chromium: /home/ak/Projects/botdetection/Backend/chromium-1228/chrome-linux64/chrome
+10:29:08 INFO    [real-browser] launching /home/ak/Projects/botdetection/Backend/chromium-1228/chrome-linux64/chrome (profile /home/ak/.cache/reddit_scraper_profile, port 9222)
+10:29:09 INFO    [real-browser] debugging port is up
+10:29:09 INFO    Trying backend 'html' for /u/Plus-Affect-6365
+10:29:09 INFO    [html] attached to real browser at http://127.0.0.1:9222 (version 149.0.7827.55)
+10:29:19 INFO    [login] this browser profile is not logged in to Reddit.
+10:29:20 INFO    [login] log in in the browser window (the profile remembers it for next time).
+10:33:34 ERROR   Backend 'html' failed: login_required: still not logged in after the prompt
+10:33:34 INFO    [real-browser] closing the browser we launched
+10:33:34 ERROR   No data collected for /u/Plus-Affect-6365 (265.5s). Nothing written.
+10:34:10 INFO    [real-browser] no system Chrome/Chromium on PATH; using the bundled Chromium: /home/ak/Projects/botdetection/Backend/chromium-1228/chrome-linux64/chrome
+10:34:10 INFO    [real-browser] launching /home/ak/Projects/botdetection/Backend/chromium-1228/chrome-linux64/chrome (profile /home/ak/.cache/reddit_scraper_profile, port 9222)
+10:34:11 INFO    [real-browser] debugging port is up
+10:34:11 INFO    Trying backend 'html' for /u/Plus-Affect-6365
+10:34:11 INFO    [html] attached to real browser at http://127.0.0.1:9222 (version 149.0.7827.55)
+10:34:13 INFO    [login] this browser profile is not logged in to Reddit.
+10:34:13 INFO    [login] log in in the browser window (the profile remembers it for next time).
+10:34:27 ERROR   Backend 'html' failed: login_required: still not logged in after the prompt
+10:34:27 INFO    [real-browser] closing the browser we launched
+10:34:27 ERROR   No data collected for /u/Plus-Affect-6365 (16.8s). Nothing written.
+10:36:08 INFO    [real-browser] no system Chrome/Chromium on PATH; using the bundled Chromium: /home/ak/Projects/botdetection/Backend/chromium-1228/chrome-linux64/chrome
+10:36:08 INFO    [real-browser] launching /home/ak/Projects/botdetection/Backend/chromium-1228/chrome-linux64/chrome (profile /home/ak/.cache/reddit_scraper_profile, port 9222)
+10:36:08 INFO    [real-browser] debugging port is up
+10:36:08 INFO    Trying backend 'html' for /u/Plus-Affect-6365
+10:36:09 INFO    [html] attached to real browser at http://127.0.0.1:9222 (version 149.0.7827.55)
+10:36:11 INFO    [login] check: HTTP 200, url https://old.reddit.com/login/?reason=lor2&dest=https%3A%2F%2Fold.reddit.com%2F, session cookie=True, logged-in UI=False
+10:36:11 INFO    [login] browser profile is logged in to Reddit
+10:36:14 INFO    [html] page 1 HTTP 200 in 2.99s, 25 items, final url https://old.reddit.com/user/Plus-Affect-6365/
+10:36:14 INFO    [html] page 1 parsed: 25 timestamps, 25 texts, 0 skipped (no timestamp)
+10:36:18 INFO    [html] page 2 HTTP 200 in 2.32s, 17 items, final url https://old.reddit.com/user/Plus-Affect-6365/?count=25&after=t1_lszkufh
+10:36:18 INFO    [html] page 2 parsed: 42 timestamps, 42 texts, 0 skipped (no timestamp)
+10:36:18 INFO    [html] no 'next' link; end of listing
+10:36:18 INFO    [real-browser] closing the browser we launched
+10:36:18 INFO    Done (ok, backend=html) in 10.5s: 42 timestamps, median gap 288288.0s -> reddit_user_Plus-Affect-6365_hybrid.json
+10:42:22 INFO    [real-browser] no system Chrome/Chromium on PATH; using the bundled Chromium: /home/ak/Projects/botdetection/Backend/chromium-1228/chrome-linux64/chrome
+10:42:22 INFO    [real-browser] launching /home/ak/Projects/botdetection/Backend/chromium-1228/chrome-linux64/chrome (hidden/headless, profile /home/ak/.cache/reddit_scraper_profile, port 9222)
+10:42:23 INFO    [real-browser] debugging port is up
+10:42:24 INFO    [login] check: HTTP 403, url https://old.reddit.com/login/?reason=lor2&dest=https%3A%2F%2Fold.reddit.com%2F, session cookie=True, logged-in UI=False
+10:42:24 INFO    [real-browser] profile is logged in; running without a window
+10:42:24 INFO    Trying backend 'html' for /u/Plus-Affect-6365
+10:42:25 INFO    [html] attached to real browser at http://127.0.0.1:9222 (version 149.0.7827.55)
+10:42:26 INFO    [html] page 1 HTTP 403 in 1.45s, 0 items, final url https://old.reddit.com/user/Plus-Affect-6365/
+10:42:26 ERROR   [html] Reddit blocked the real browser too. Check the browser window: is the account still logged in, or does it show a block/CAPTCHA page?
+10:42:26 ERROR   [html] debug artifacts saved: debug_artifacts/Plus-Affect-6365_1791090746_http_403_blocked.{png,html}
+10:42:26 ERROR   Backend 'html' failed: http_403_blocked: on https://old.reddit.com/user/Plus-Affect-6365/
+10:42:26 ERROR   Reddit is refusing even your real browser. Look at the browser window for a block/CAPTCHA page, and consider the OAuth backend or approved researcher access.
+10:42:26 INFO    [real-browser] hidden run collected nothing; retrying once with a visible window
+10:42:26 INFO    [real-browser] closing the browser we launched
+10:42:26 INFO    [real-browser] launching /home/ak/Projects/botdetection/Backend/chromium-1228/chrome-linux64/chrome (visible window, profile /home/ak/.cache/reddit_scraper_profile, port 9222)
+10:42:27 INFO    [real-browser] debugging port is up
+10:42:27 INFO    Trying backend 'html' for /u/Plus-Affect-6365
+10:42:28 INFO    [html] attached to real browser at http://127.0.0.1:9222 (version 149.0.7827.55)
+10:42:29 INFO    [login] check: HTTP 200, url https://old.reddit.com/login/?reason=lor2&dest=https%3A%2F%2Fold.reddit.com%2F, session cookie=True, logged-in UI=False
+10:42:29 INFO    [login] browser profile is logged in to Reddit
+10:42:32 INFO    [html] page 1 HTTP 200 in 2.11s, 25 items, final url https://old.reddit.com/user/Plus-Affect-6365/
+10:42:32 WARNING [html] a self post had no extractable body; its markup was saved to debug_artifacts/Plus-Affect-6365_selfpost_without_body.html
+10:42:32 INFO    [html] page 1 parsed: 25 timestamps, 25 texts, 0 skipped (no timestamp) | posts=4 with body=2, self posts missing body=1
+10:42:37 INFO    [html] page 2 HTTP 200 in 2.01s, 17 items, final url https://old.reddit.com/user/Plus-Affect-6365/?count=25&after=t1_lszkufh
+10:42:37 INFO    [html] page 2 parsed: 42 timestamps, 42 texts, 0 skipped (no timestamp) | posts=3 with body=1, self posts missing body=0
+10:42:37 INFO    [html] no 'next' link; end of listing
+10:42:37 INFO    [real-browser] closing the browser we launched
+10:42:38 INFO    Done (ok, backend=html) in 15.1s: 42 timestamps, median gap 288288.0s -> reddit_user_Plus-Affect-6365_hybrid.json
